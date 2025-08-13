@@ -1,0 +1,73 @@
+server:
+  port: 8080
+
+b:
+  url: http://localhost:8081
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: [health, info, metrics, prometheus, env, configprops]
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+      otlp:
+        enabled: true
+        step: 5s
+        url: http://otel-collector:4318/v1/metrics
+  tracing:
+    sampling:
+      probability: 1.0
+  otlp:
+    tracing:
+      endpoint: http://otel-collector:4318/v1/traces
+
+otel:
+  instrumentation:
+    http:
+      server:
+        enabled: true
+  exporter:
+    otlp:
+      endpoint: http://otel-collector:4318
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      backendB:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 10s
+  retry:
+    instances:
+      backendB:
+        maxAttempts: 3
+        waitDuration: 200ms
+        enableExponentialBackoff: true
+        exponentialBackoffMultiplier: 2.0
+  ratelimiter:
+    instances:
+      backendB:
+        limitForPeriod: 5
+        limitRefreshPeriod: 1s
+        timeoutDuration: 1s
+  timelimiter:
+    instances:
+      timelimiterB:
+        timeoutDuration: 2s
+        cancelRunningFuture: true
+  bulkhead:
+    instances:
+      bhX:
+        type: SEMAPHORE
+        maxConcurrentCalls: 3
+        maxWaitDuration: 1s
+      bhY:
+        type: SEMAPHORE
+        maxConcurrentCalls: 2
+        maxWaitDuration: 1s

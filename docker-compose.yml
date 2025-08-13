@@ -1,0 +1,58 @@
+services:
+  service-b:
+    image: r4j-sample-service-b:0.1.0
+    container_name: service-b
+    ports:
+      - "8081:8081"
+    networks:
+      - r4j-net
+
+  service-a:
+    image: r4j-sample-service-a:0.1.0
+    container_name: service-a
+    ports:
+      - "8080:8080"
+    environment:
+      - B_URL=http://service-b:8081
+    depends_on:
+      - service-b
+    networks:
+      - r4j-net
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    ports:
+      - "9090:9090"
+    networks:
+      - r4j-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - r4j-net
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+    ports:
+      - "4318:4318"   # OTLP HTTP (metrics)
+      - "9464:9464"   # Prometheus metrics exporter
+    networks:
+      - r4j-net
+
+networks:
+  r4j-net:
+    driver: bridge
