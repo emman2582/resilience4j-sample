@@ -38,11 +38,11 @@ resilience4j:
     instances:
       backendB:
         slidingWindowType: COUNT_BASED
-        slidingWindowSize: 10
-        minimumNumberOfCalls: 5
+        slidingWindowSize: 6
+        minimumNumberOfCalls: 3
         failureRateThreshold: 50
         automaticTransitionFromOpenToHalfOpenEnabled: true
-        waitDurationInOpenState: 10s
+        waitDurationInOpenState: 5s
   retry:
     instances:
       backendB:
@@ -50,6 +50,12 @@ resilience4j:
         waitDuration: 200ms
         enableExponentialBackoff: true
         exponentialBackoffMultiplier: 2.0
+        retryExceptions:
+          - java.io.IOException
+          - org.springframework.web.client.ResourceAccessException
+          - org.springframework.web.client.HttpServerErrorException
+        ignoreExceptions:
+          - io.github.resilience4j.circuitbreaker.CallNotPermittedException
   ratelimiter:
     instances:
       backendB:
@@ -65,9 +71,14 @@ resilience4j:
     instances:
       bhX:
         type: SEMAPHORE
-        maxConcurrentCalls: 3
-        maxWaitDuration: 1s
+        maxConcurrentCalls: 2
+        maxWaitDuration: 100ms
       bhY:
         type: SEMAPHORE
-        maxConcurrentCalls: 2
-        maxWaitDuration: 1s
+        maxConcurrentCalls: 1
+        maxWaitDuration: 100ms
+  metrics:
+    enabled: true
+    export:
+      prometheus:
+        enabled: true

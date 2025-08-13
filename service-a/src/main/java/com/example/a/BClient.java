@@ -27,10 +27,13 @@ public class BClient {
      * Demonstrates CircuitBreaker + Retry against a flaky downstream.
      * Fallback returns cached/default data.
      */
-    @CircuitBreaker(name = "backendB", fallbackMethod = "fallbackString")
+    @CircuitBreaker(name = "backendB")
     @Retry(name = "backendB")
     public String callFlaky(int failRate) {
-        return restTemplate.getForObject(baseUrl + "/api/b/flaky?failRate=" + failRate, String.class);
+        log.info("Calling flaky endpoint with failRate: {}", failRate);
+        String result = restTemplate.getForObject(baseUrl + "/api/b/flaky?failRate=" + failRate, String.class);
+        log.info("Flaky call succeeded: {}", result);
+        return result;
     }
 
     /**
@@ -60,17 +63,58 @@ public class BClient {
 
     /**
      * Demonstrates Semaphore Bulkhead isolation for two traffic classes.
+     * Uses longer processing time to make metrics visible.
      */
     @Bulkhead(name = "bhX", fallbackMethod = "fallbackString")
     public String bulkheadCallX() {
-        busyWork();
-        return restTemplate.getForObject(baseUrl + "/api/b/ok", String.class) + " [via bhX]";
+        log.info("Starting bulkheadCallX - simulating work");
+        simulateWork(10000); // 10 second work for maximum visibility
+        String result = restTemplate.getForObject(baseUrl + "/api/b/ok", String.class) + " [via bhX]";
+        log.info("Completed bulkheadCallX");
+        return result;
     }
 
     @Bulkhead(name = "bhY", fallbackMethod = "fallbackString")
     public String bulkheadCallY() {
-        busyWork();
-        return restTemplate.getForObject(baseUrl + "/api/b/ok", String.class) + " [via bhY]";
+        log.info("Starting bulkheadCallY - simulating work");
+        simulateWork(8000); // 8 second work
+        String result = restTemplate.getForObject(baseUrl + "/api/b/ok", String.class) + " [via bhY]";
+        log.info("Completed bulkheadCallY");
+        return result;
+    }
+
+    /**
+     * Bulkhead stress test endpoint - creates high contention
+     */
+    @Bulkhead(name = "bhX", fallbackMethod = "fallbackString")
+    public String bulkheadStressX() {
+        log.info("Starting bulkheadStressX - long running task");
+        simulateWork(5000); // 5 second work
+        String result = restTemplate.getForObject(baseUrl + "/api/b/ok", String.class) + " [stress-bhX]";
+        log.info("Completed bulkheadStressX");
+        return result;
+    }
+
+
+
+    private String fallbackString(String param, Throwable t) {
+        log.warn("Bulkhead fallback triggered: {}", t.getMessage());
+        return "bulkhead-fallback: " + t.getClass().getSimpleName();
+    }
+
+    private String fallbackFlaky(int failRate, Throwable t) {
+        log.warn("Circuit breaker fallback triggered for failRate {}: {}", failRate, t.getMessage());
+        return "circuit-breaker-fallback: " + t.getClass().getSimpleName();
+    }
+
+    private String fallbackString(int param, Throwable t) {
+        log.warn("Bulkhead fallback triggered: {}", t.getMessage());
+        return "bulkhead-fallback: " + t.getClass().getSimpleName();
+    }
+
+    private String fallbackString(long param, Throwable t) {
+        log.warn("Bulkhead fallback triggered: {}", t.getMessage());
+        return "bulkhead-fallback: " + t.getClass().getSimpleName();
     }
 
     /**
@@ -89,5 +133,19 @@ public class BClient {
     private void busyWork() {
         long x = 0;
         for (int i = 0; i < 50000; i++) x += i;
+    }
+
+    /**
+     * Simulates meaningful work that takes time - makes bulkhead metrics visible
+     */
+    private void simulateWork(long durationMs) {
+        log.info("Starting work simulation for {}ms", durationMs);
+        try {
+            Thread.sleep(durationMs);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.warn("Work simulation interrupted");
+        }
+        log.info("Completed work simulation");
     }
 }

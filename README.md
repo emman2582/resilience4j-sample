@@ -278,6 +278,11 @@ curl http://localhost:8080/actuator/metrics/http.server.requests
 - Use IP addresses instead of hostnames
 - Check /etc/hosts or Windows hosts file
 
+**"No such container: minikube" / minikube state unknown**
+- Minikube cluster is corrupted or not running
+- Delete and recreate minikube cluster
+- Check Docker Desktop is running
+
 ## 🧹 Cleanup
 
 ```bash
