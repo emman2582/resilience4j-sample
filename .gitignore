@@ -1,5 +1,10 @@
-/.vscode
-/error.txt
-/.gradle
-/service-a/build
-/service-b/build
+# IDE
+.vscode/
+
+# Gradle
+.gradle/
+build/
+
+# Logs
+error.txt
+nohup.out
