@@ -1,2 +1,5 @@
 /.vscode
 /error.txt
+/.gradle
+/service-a/build
+/service-b/build
