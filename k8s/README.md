@@ -1,115 +1,69 @@
 # Resilience4j Kubernetes Deployment
 
-Kubernetes deployment for Resilience4j sample application with complete monitoring stack.
+This directory contains Kubernetes manifests for deploying the Resilience4j sample application with monitoring stack.
 
-## 🏗️ Architecture
+## Architecture
 
-- **service-a**: Client API with Resilience4j patterns (8080)
-- **service-b**: Downstream API service (8081)
-- **prometheus**: Metrics collection and storage (9090)
-- **grafana**: Visualization dashboard (3000)
-- **otel-collector**: OpenTelemetry collector (4318 OTLP, 9464 metrics)
+- **service-a**: Client-facing API with Resilience4j patterns (port 8080)
+- **service-b**: Downstream API service (port 8081)
+- **prometheus**: Metrics collection and storage (port 9090)
+- **grafana**: Metrics visualization dashboard (port 3000)
+- **otel-collector**: OpenTelemetry collector for traces/metrics (port 4318)
 
-## 📋 Prerequisites
+## Prerequisites
 
-- Kubernetes cluster (minikube recommended for local development)
-- kubectl configured and connected
-- Local Docker images built:
-  ```bash
-  gradle clean build
-  docker build -t r4j-sample-service-a:0.1.0 service-a/
-  docker build -t r4j-sample-service-b:0.1.0 service-b/
-  ```
+- Kubernetes cluster (minikube, kind, or cloud provider)
+- kubectl configured
+- Docker images available:
+  - `r4j-sample-service-a:0.1.0`
+  - `r4j-sample-service-b:0.1.0`
 
-## 🚀 Quick Deployment
+## Quick Start
 
-1. **For Minikube users (load local images first):**
+1. **Deploy all services:**
    ```bash
-   cd k8s
-   chmod +x *.sh
-   ./load-images.sh
+   kubectl apply -f k8s/
    ```
 
-2. **Deploy all services:**
+2. **Check deployment status:**
    ```bash
-   ./deploy.sh
+   kubectl get pods
+   kubectl get services
    ```
 
-3. **Check deployment status:**
+3. **Access applications:**
    ```bash
-   ./check-status.sh
+   # Port forward to access services locally
+   kubectl port-forward svc/service-a 8080:8080 &
+   kubectl port-forward svc/grafana 3000:3000 &
+   kubectl port-forward svc/prometheus 9090:9090 &
    ```
 
-4. **Setup port forwarding:**
+4. **Test the application:**
    ```bash
-   ./port-forward.sh
+   curl http://localhost:8080/api/a/ok
+   curl http://localhost:8080/api/a/flaky?failRate=60
    ```
 
-## 🧪 Testing
+5. **Access monitoring:**
+   - Grafana: http://localhost:3000 (admin/admin)
+   - Prometheus: http://localhost:9090
+
+## Configuration Files
+
+- `configs/`: ConfigMaps for Prometheus and OpenTelemetry Collector
+- `deployments/`: Deployment manifests for all services
+- `services/`: Service manifests for network access
+
+## Cleanup
 
 ```bash
-# Test basic connectivity
-curl http://localhost:8080/api/a/ok
-
-# Test resilience patterns
-curl "http://localhost:8080/api/a/flaky?failRate=60"
-curl "http://localhost:8080/api/a/slow?delayMs=2500"
-curl http://localhost:8080/api/a/bulkhead/x
-curl http://localhost:8080/api/a/limited
+kubectl delete -f k8s/
 ```
 
-## 📊 Monitoring Access
+## Notes
 
-- **Grafana**: http://localhost:3000 (admin/admin)
-- **Prometheus**: http://localhost:9090
-- **Service A Metrics**: http://localhost:8080/actuator/prometheus
-- **Service B Metrics**: http://localhost:8081/actuator/prometheus
-- **OTel Collector Metrics**: http://localhost:9464/metrics
-
-## 🛠️ Troubleshooting
-
-**Pod not starting:**
-```bash
-kubectl logs <pod-name>
-kubectl describe pod <pod-name>
-```
-
-**Image pull issues:**
-```bash
-./load-images.sh  # For minikube
-# Or use ./fix-deployment.sh for complete reset
-```
-
-**Port forward issues:**
-```bash
-pkill -f "kubectl port-forward"
-./port-forward.sh
-```
-
-## 📁 Project Structure
-
-```
-k8s/
-├── configs/           # ConfigMaps for Prometheus & OTel
-├── deployments/       # Pod deployments
-├── services/          # Network services
-├── deploy.sh          # Main deployment script
-├── check-status.sh    # Status checking
-├── port-forward.sh    # Port forwarding setup
-├── load-images.sh     # Load images to minikube
-├── fix-deployment.sh  # Reset and fix deployment
-└── cleanup.sh         # Remove all resources
-```
-
-## 🧹 Cleanup
-
-```bash
-./cleanup.sh
-```
-
-## 📝 Notes
-
-- Uses `imagePullPolicy: Never` for local development
-- All services deployed in default namespace
-- Health checks configured for better reliability
-- Resource limits set for cluster stability
+- All services are deployed in the default namespace
+- ConfigMaps contain the same configurations as docker-compose setup
+- Services use ClusterIP by default; use port-forward for local access
+- For production, consider using Ingress controllers and persistent volumes
