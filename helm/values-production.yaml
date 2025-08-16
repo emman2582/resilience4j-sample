@@ -12,7 +12,7 @@ serviceA:
   image:
     repository: r4j-sample-service-a
     tag: "0.1.0"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicaCount: 3
   service:
     type: ClusterIP
@@ -51,7 +51,7 @@ serviceB:
   image:
     repository: r4j-sample-service-b
     tag: "0.1.0"
-    pullPolicy: Always
+    pullPolicy: IfNotPresent
   replicaCount: 2
   service:
     type: ClusterIP

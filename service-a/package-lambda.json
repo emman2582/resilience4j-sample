@@ -1,0 +1,12 @@
+{
+  "name": "service-a-lambda-adapter",
+  "version": "1.0.0",
+  "description": "Lambda adapter for Service A Spring Boot application",
+  "main": "lambda-adapter.js",
+  "dependencies": {
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

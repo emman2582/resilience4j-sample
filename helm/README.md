@@ -188,6 +188,45 @@ cd grafana
 2. Add Prometheus data source: `http://prometheus:9090`
 3. Import dashboard using ID `12139` or upload `grafana-dashboard-enhanced.json`
 
+## 🔄 Autoscaling
+
+### HPA Configuration
+```yaml
+autoscaling:
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+```
+
+### VPA Configuration
+```yaml
+autoscaling:
+  vpa:
+    enabled: true
+    updateMode: "Auto"
+    minAllowed:
+      cpu: 100m
+      memory: 128Mi
+    maxAllowed:
+      cpu: 2000m
+      memory: 2Gi
+```
+
+### Deploy with Autoscaling
+```bash
+# Enable HPA only
+helm install resilience4j-stack ./resilience4j-stack \
+  --set autoscaling.hpa.enabled=true
+
+# Enable both HPA and VPA
+helm install resilience4j-stack ./resilience4j-stack \
+  --set autoscaling.hpa.enabled=true \
+  --set autoscaling.vpa.enabled=true
+```
+
 ### Key Metrics to Monitor
 
 - `resilience4j_circuitbreaker_state` - Circuit breaker states

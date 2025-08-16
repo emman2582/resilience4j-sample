@@ -293,7 +293,13 @@ nodejs-client/
 
 ## 🧹 Cleanup
 
+**Linux/Mac:**
 ```bash
+./cleanup.sh
+```
+
+**Windows:**
+```cmd
 # Stop running processes
 Ctrl+C
 
@@ -307,5 +313,5 @@ del .env
 
 # Stop services (from project root)
 cd ..
-taskkill /F /IM java.exe  # Stop gradle processes
+taskkill /F /IM java.exe
 ```

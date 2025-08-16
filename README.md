@@ -22,7 +22,9 @@ resilience4j-sample/
 │   └── grafana-dashboard-*.json  # Grafana dashboards
 ├── k8s/                   # Kubernetes manifests
 ├── helm/                  # Helm charts
-└── grafana/               # Dashboard loading scripts
+├── grafana/               # Dashboard loading scripts
+├── aws-lambda/            # AWS Lambda deployment and testing
+└── cloudformation-lambda/ # CloudFormation templates for Lambda
 ```
 
 ## 🚀 Quick Start
@@ -88,8 +90,16 @@ cd docker
 docker compose up -d
 ```
 
+### Docker Swarm (With Autoscaling)
+```bash
+cd docker
+./setup-swarm.sh
+./start-autoscaler.sh  # Optional: automated scaling
+```
+
 **Access Points:**
 - Service A: http://localhost:8080
+- Service A (Load Balanced): http://localhost
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin/admin)
 
@@ -110,6 +120,20 @@ See [`helm/README.md`](helm/README.md) for complete Helm deployment instructions
 ```bash
 cd helm
 helm install resilience4j-stack ./resilience4j-stack
+```
+
+## λ AWS Lambda Deployment
+
+See [`aws-lambda/README.md`](aws-lambda/README.md) for serverless deployment instructions.
+
+```bash
+# Automated deployment, testing, and cleanup
+cd aws-lambda/performance-tests
+./test-and-destroy.sh
+
+# Manual deployment
+cd aws-lambda
+./scripts/deploy-containers.sh
 ```
 
 ## 📊 Monitoring
@@ -154,14 +178,14 @@ cd grafana
 ### Complete Project Cleanup
 ```bash
 # Clean everything (recommended)
-./docker/cleanup-all.sh
+./cleanup-all.sh
 ```
 
 ### Selective Cleanup
 
 **Docker Compose:**
 ```bash
-cd docker && docker compose down --volumes --remove-orphans
+cd docker && ./cleanup.sh
 ```
 
 **Kubernetes (Local):**

@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: otel-collector
-        image: otel/opentelemetry-collector-contrib:latest
+        image: otel/opentelemetry-collector-contrib:0.91.0
         ports:
         - containerPort: 4318
           name: otlp-http

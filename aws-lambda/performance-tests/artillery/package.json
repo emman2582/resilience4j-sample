@@ -1,0 +1,18 @@
+{
+  "name": "lambda-performance-tests",
+  "version": "1.0.0",
+  "description": "Performance tests for AWS Lambda resilience patterns",
+  "scripts": {
+    "test:load": "artillery run load-test.yml --output results/load-test-report.json",
+    "test:stress": "artillery run stress-test.yml --output results/stress-test-report.json",
+    "test:spike": "artillery run spike-test.yml --output results/spike-test-report.json",
+    "report": "artillery report results/load-test-report.json --output results/load-test-report.html",
+    "test:all": "npm run test:load && npm run test:stress && npm run test:spike && npm run report"
+  },
+  "dependencies": {
+    "artillery": "^2.0.0"
+  },
+  "devDependencies": {
+    "@artillery/plugin-metrics-by-endpoint": "^1.0.0"
+  }
+}

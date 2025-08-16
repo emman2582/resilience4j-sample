@@ -131,6 +131,27 @@ cd grafana
 ./load-dashboards-k8s.sh resilience4j-local local
 ```
 
+## 🔄 Autoscaling
+
+### Setup Autoscaling
+```bash
+# Setup HPA only
+./setup-autoscaling.sh resilience4j-local
+
+# Setup HPA + VPA
+./setup-autoscaling.sh resilience4j-local true
+```
+
+### Test Autoscaling
+```bash
+# Generate load to trigger scaling
+./test-autoscaling.sh resilience4j-local
+
+# Monitor scaling
+kubectl get hpa -n resilience4j-local -w
+kubectl get pods -n resilience4j-local -w
+```
+
 ## 🛠️ Troubleshooting
 
 ### Kubernetes Cluster Issues

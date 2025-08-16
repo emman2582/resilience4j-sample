@@ -85,3 +85,22 @@ affinity:
 # No persistent volumes for local development
 persistence:
   enabled: false
+
+# Autoscaling configuration
+autoscaling:
+  hpa:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  vpa:
+    enabled: false
+    updateMode: "Off"
+    minAllowed:
+      cpu: 100m
+      memory: 128Mi
+    maxAllowed:
+      cpu: 1000m
+      memory: 1Gi
+    controlledResources: ["cpu", "memory"]

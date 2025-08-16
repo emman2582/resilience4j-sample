@@ -10,26 +10,23 @@ pkill -f "gradle.*bootRun" || true
 pkill -f "kubectl port-forward" || true
 pkill -f "minikube" || true
 
-# Cleanup Docker containers and images
+# Docker cleanup
 echo "🐳 Cleaning up Docker resources..."
-docker stop $(docker ps -q --filter "ancestor=r4j-sample-service-a:0.1.0") 2>/dev/null || true
-docker stop $(docker ps -q --filter "ancestor=r4j-sample-service-b:0.1.0") 2>/dev/null || true
-docker rm $(docker ps -aq --filter "ancestor=r4j-sample-service-a:0.1.0") 2>/dev/null || true
-docker rm $(docker ps -aq --filter "ancestor=r4j-sample-service-b:0.1.0") 2>/dev/null || true
-
-# Docker Compose cleanup
-echo "🐳 Cleaning up Docker Compose..."
 cd docker
-docker compose down --volumes --remove-orphans || true
+./cleanup.sh
 cd ..
 
 # Kubernetes cleanup
 echo "☸️ Cleaning up Kubernetes resources..."
-./k8s/cleanup.sh || true
+cd k8s
+./cleanup.sh || true
+cd ..
 
 # Helm cleanup  
 echo "⎈ Cleaning up Helm resources..."
-./helm/cleanup.sh || true
+cd helm
+./cleanup.sh || true
+cd ..
 
 # Minikube cleanup
 if command -v minikube &> /dev/null; then
@@ -47,6 +44,7 @@ echo "📦 Cleaning up NodeJS..."
 cd nodejs-client
 rm -rf node_modules || true
 rm -f package-lock.json || true
+rm -f .env || true
 cd ..
 
 # Clean up temporary files

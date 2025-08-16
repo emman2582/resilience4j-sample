@@ -75,6 +75,38 @@ docker compose up -d
 - Prometheus: http://localhost:9090
 - Grafana: http://localhost:3000 (admin/admin)
 
+## 🔄 Docker Autoscaling
+
+### Docker Swarm with Load Balancing
+```bash
+# Setup Docker Swarm with autoscaling
+./setup-swarm.sh
+
+# Manual scaling
+docker service scale r4j-stack_service-a=3
+
+# View service status
+docker service ls
+docker service ps r4j-stack_service-a
+```
+
+### Automated Scaling (Prometheus-based)
+```bash
+# Start autoscaler (requires Python3)
+./start-autoscaler.sh
+
+# Test scaling
+./test-scaling.sh
+```
+
+### Scaling Configuration
+- **Min Replicas**: 1
+- **Max Replicas**: 5
+- **CPU Threshold**: 70%
+- **Memory Threshold**: 80%
+- **Scale Up Cooldown**: 60s
+- **Scale Down Cooldown**: 300s
+
 ## ⚙️ Kubernetes Deployment
 
 See [`k8s/README.md`](k8s/README.md) for complete Kubernetes deployment instructions.
@@ -341,7 +373,16 @@ cd nodejs-client && npm start  # Terminal 3
 
 **Docker Compose:**
 ```bash
-docker compose down --volumes --remove-orphans
+./cleanup.sh
+```
+
+**Docker Swarm:**
+```bash
+# Remove stack
+docker stack rm r4j-stack
+
+# Leave swarm (optional)
+docker swarm leave --force
 ```
 
 **Kubernetes (Local):**

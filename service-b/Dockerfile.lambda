@@ -1,0 +1,26 @@
+# AWS Lambda Container for Service B
+FROM public.ecr.aws/lambda/nodejs:18
+
+# Install Java 21 and clean up in single layer
+RUN yum update -y && \
+    yum install -y java-21-amazon-corretto && \
+    yum clean all && \
+    rm -rf /var/cache/yum
+
+# Copy package.json first for better layer caching
+COPY package-lambda.json ./package.json
+
+# Install Node.js dependencies
+RUN npm ci --only=production && npm cache clean --force
+
+# Copy Lambda adapter
+COPY lambda-adapter.js ./
+
+# Copy Spring Boot JAR with validation
+COPY build/libs/service-b-*.jar /app/service-b.jar
+
+# Verify JAR exists and is executable
+RUN test -f /app/service-b.jar || (echo "ERROR: service-b JAR not found" && exit 1)
+
+# Set Lambda handler
+CMD [ "lambda-adapter.handler" ]

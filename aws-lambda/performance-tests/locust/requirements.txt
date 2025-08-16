@@ -1,0 +1,7 @@
+# Locust performance testing requirements
+locust==2.17.0
+requests==2.32.4
+boto3==1.34.0
+matplotlib==3.8.0
+pandas==2.1.0
+numpy==1.25.0

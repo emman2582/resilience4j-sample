@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # Service A Lambda Container
+  service-a:
+    build:
+      context: ../service-a
+      dockerfile: Dockerfile.lambda
+    ports:
+      - "9000:8080"  # Lambda RIE port
+    environment:
+      - SERVICE_B_URL=http://service-b:8080
+      - CIRCUIT_BREAKER_FAILURE_RATE_THRESHOLD=50
+      - RETRY_MAX_ATTEMPTS=3
+      - BULKHEAD_MAX_CONCURRENT_CALLS=10
+      - RATE_LIMITER_PERMITS_PER_SECOND=100
+      - TIMEOUT_DURATION=5000
+      - DYNAMODB_TABLE=resilience4j-circuit-breaker-state
+    depends_on:
+      - dynamodb-local
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - lambda-net
+
+  # Service B Lambda Container
+  service-b:
+    build:
+      context: ../service-b
+      dockerfile: Dockerfile.lambda
+    ports:
+      - "9001:8080"  # Lambda RIE port
+    environment:
+      - FAILURE_RATE=0
+      - DELAY_MS=0
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - lambda-net
+
+  # DynamoDB Local for testing
+  dynamodb-local:
+    image: amazon/dynamodb-local:2.0.0
+    ports:
+      - "8000:8000"
+    command: ["-jar", "DynamoDBLocal.jar", "-sharedDb", "-inMemory"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - lambda-net
+
+networks:
+  lambda-net:
+    driver: bridge

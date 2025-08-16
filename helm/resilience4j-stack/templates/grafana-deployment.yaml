@@ -27,7 +27,10 @@ spec:
         - name: GF_SECURITY_ADMIN_USER
           value: {{ .Values.grafana.adminUser | quote }}
         - name: GF_SECURITY_ADMIN_PASSWORD
-          value: {{ .Values.grafana.adminPassword | quote }}
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "resilience4j-stack.fullname" . }}-grafana-secret
+              key: admin-password
         resources:
           {{- toYaml .Values.grafana.resources | nindent 10 }}
 {{- end }}

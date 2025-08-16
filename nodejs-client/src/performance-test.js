@@ -46,7 +46,7 @@ async function runPerformanceTest() {
       console.log(`   Errors: ${result.errors}`);
       console.log('');
     } catch (error) {
-      console.error(`   ❌ Error testing ${test.name}: ${error.message}\n`);
+      console.error(`   ❌ Error testing ${test.name}: ${encodeURIComponent(error.message)}\n`);
     }
   }
 }

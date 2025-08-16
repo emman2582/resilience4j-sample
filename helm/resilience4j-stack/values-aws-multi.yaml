@@ -116,3 +116,35 @@ persistence:
   grafana:
     size: 5Gi
     storageClass: gp2
+
+# Autoscaling configuration
+autoscaling:
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+  vpa:
+    enabled: true
+    updateMode: "Auto"
+    minAllowed:
+      cpu: 300m
+      memory: 512Mi
+    maxAllowed:
+      cpu: 2000m
+      memory: 2Gi
+    controlledResources: ["cpu", "memory"]

@@ -98,3 +98,35 @@ affinity:
 # Disable persistent volumes for simplicity
 persistence:
   enabled: false
+
+# Autoscaling configuration
+autoscaling:
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+    behavior:
+      scaleUp:
+        stabilizationWindowSeconds: 60
+        policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+      scaleDown:
+        stabilizationWindowSeconds: 300
+        policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+  vpa:
+    enabled: false
+    updateMode: "Off"
+    minAllowed:
+      cpu: 200m
+      memory: 256Mi
+    maxAllowed:
+      cpu: 500m
+      memory: 512Mi
+    controlledResources: ["cpu", "memory"]

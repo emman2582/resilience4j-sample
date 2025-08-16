@@ -1,0 +1,95 @@
+# Artillery.js Load Test Configuration for Lambda Functions
+# Tests various resilience patterns under different load conditions
+
+config:
+  target: 'https://your-api-gateway-url.execute-api.region.amazonaws.com/prod'
+  phases:
+    # Warm-up phase - overcome cold starts
+    - duration: 60
+      arrivalRate: 1
+      name: "Warm-up"
+    
+    # Ramp-up phase
+    - duration: 120
+      arrivalRate: 5
+      rampTo: 20
+      name: "Ramp-up"
+    
+    # Sustained load phase
+    - duration: 300
+      arrivalRate: 20
+      name: "Sustained load"
+    
+    # Spike test
+    - duration: 60
+      arrivalRate: 50
+      name: "Spike test"
+    
+    # Cool-down phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Cool-down"
+
+  defaults:
+    headers:
+      User-Agent: "Artillery Load Test"
+      Content-Type: "application/json"
+
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+
+scenarios:
+  # Test basic connectivity and health
+  - name: "Health Check"
+    weight: 10
+    flow:
+      - get:
+          url: "/health"
+          name: "health_check"
+
+  # Test normal operation
+  - name: "Normal Operation"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/a/ok"
+          name: "normal_ok"
+
+  # Test circuit breaker pattern
+  - name: "Circuit Breaker Test"
+    weight: 20
+    flow:
+      - get:
+          url: "/api/a/flaky"
+          qs:
+            failRate: "{{ $randomInt(30, 70) }}"
+          name: "circuit_breaker"
+
+  # Test timeout and fallback
+  - name: "Timeout Test"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/a/slow"
+          qs:
+            delayMs: "{{ $randomInt(1000, 3000) }}"
+          name: "timeout_test"
+
+  # Test bulkhead pattern
+  - name: "Bulkhead Test"
+    weight: 15
+    flow:
+      - get:
+          url: "/api/a/bulkhead/{{ $pick(['x', 'y']) }}"
+          name: "bulkhead_test"
+
+  # Test rate limiter
+  - name: "Rate Limiter Test"
+    weight: 10
+    flow:
+      - loop:
+          - get:
+              url: "/api/a/limited"
+              name: "rate_limiter"
+        count: 5
