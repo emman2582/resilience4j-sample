@@ -1,0 +1,40 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.otelCollector.name }}
+  labels:
+    app: {{ .Values.otelCollector.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.otelCollector.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.otelCollector.name }}
+    spec:
+      containers:
+      - name: {{ .Values.otelCollector.name }}
+        image: "{{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}"
+        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        command: ["--config=/etc/otel-collector-config.yml"]
+        ports:
+        - name: otlp-http
+          containerPort: {{ .Values.otelCollector.service.ports.otlpHttp }}
+          protocol: TCP
+        - name: prometheus
+          containerPort: {{ .Values.otelCollector.service.ports.prometheusMetrics }}
+          protocol: TCP
+        volumeMounts:
+        - name: otel-config
+          mountPath: /etc/otel-collector-config.yml
+          subPath: otel-collector-config.yml
+        resources:
+          {{- toYaml .Values.otelCollector.resources | nindent 10 }}
+      volumes:
+      - name: otel-config
+        configMap:
+          name: {{ .Values.otelCollector.name }}-config
+{{- end }}

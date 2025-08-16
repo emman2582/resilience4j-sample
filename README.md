@@ -6,6 +6,7 @@ Demonstrates **circuit breaker, retry, timeout, bulkhead, and rate limiter** pat
 
 - **service-a** — Client API with Resilience4j patterns
 - **service-b** — Downstream API (ok/slow/flaky responses)
+- **nodejs-client** — NodeJS client consuming Service A endpoints
 
 ## 🚀 Quick Start
 
@@ -27,6 +28,8 @@ gradle :service-a:bootRun  # Terminal 2
 ```
 
 ### Test Resilience Patterns
+
+**Using cURL:**
 ```bash
 # Basic connectivity
 curl http://localhost:8080/api/a/ok
@@ -43,6 +46,14 @@ curl http://localhost:8080/api/a/bulkhead/y
 
 # Rate Limiter
 curl http://localhost:8080/api/a/limited
+```
+
+**Using NodeJS Client:**
+```bash
+cd nodejs-client
+npm install
+npm start                    # Test all endpoints
+npm run test:performance     # Load testing
 ```
 
 ## 🐳 Docker Deployment
@@ -108,6 +119,7 @@ cd k8s
 resilience4j-sample/
 ├── service-a/              # Client service with Resilience4j
 ├── service-b/              # Downstream service
+├── nodejs-client/         # NodeJS client (Node.js v24+)
 ├── k8s/                   # Kubernetes manifests
 ├── docker-compose.yml     # Full stack deployment
 ├── prometheus.yml         # Metrics scraping config
@@ -283,6 +295,31 @@ curl http://localhost:8080/actuator/metrics/http.server.requests
 - Delete and recreate minikube cluster
 - Check Docker Desktop is running
 
+### NodeJS Client Issues
+
+**"Node.js version too old"**
+```bash
+# Windows: Install Node.js 18+
+choco install nodejs -y
+node --version  # Should be 18+
+```
+
+**"npm install fails"**
+```bash
+cd nodejs-client
+npm cache clean --force
+rmdir /s /q node_modules
+npm install
+```
+
+**"Client connection refused"**
+- Ensure services are running in correct order:
+```bash
+gradle :service-b:bootRun  # Terminal 1
+gradle :service-a:bootRun  # Terminal 2
+cd nodejs-client && npm start  # Terminal 3
+```
+
 ## 🧹 Cleanup
 
 ```bash
@@ -294,6 +331,10 @@ cd k8s && ./cleanup.sh
 
 # Clean Gradle cache
 gradle clean
+
+# NodeJS Client
+cd nodejs-client
+rmdir /s /q node_modules
 
 # Remove Docker images
 docker rmi r4j-sample-service-a:0.1.0 r4j-sample-service-b:0.1.0

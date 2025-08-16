@@ -1,0 +1,21 @@
+{{- if .Values.otelCollector.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.otelCollector.name }}
+  labels:
+    app: {{ .Values.otelCollector.name }}
+spec:
+  type: {{ .Values.otelCollector.service.type }}
+  ports:
+  - port: {{ .Values.otelCollector.service.ports.otlpHttp }}
+    targetPort: {{ .Values.otelCollector.service.ports.otlpHttp }}
+    protocol: TCP
+    name: otlp-http
+  - port: {{ .Values.otelCollector.service.ports.prometheusMetrics }}
+    targetPort: {{ .Values.otelCollector.service.ports.prometheusMetrics }}
+    protocol: TCP
+    name: prometheus
+  selector:
+    app: {{ .Values.otelCollector.name }}
+{{- end }}

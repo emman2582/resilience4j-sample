@@ -27,7 +27,7 @@ public class BClient {
      * Demonstrates CircuitBreaker + Retry against a flaky downstream.
      * Fallback returns cached/default data.
      */
-    @CircuitBreaker(name = "backendB")
+    @CircuitBreaker(name = "backendB", fallbackMethod = "fallbackFlaky")
     @Retry(name = "backendB")
     public String callFlaky(int failRate) {
         log.info("Calling flaky endpoint with failRate: {}", failRate);
@@ -47,7 +47,7 @@ public class BClient {
     /**
      * Demonstrates TimeLimiter + fallback: wraps a blocking call into a CompletableFuture.
      */
-    @TimeLimiter(name = "timelimiterB", fallbackMethod = "fallbackString")
+    @TimeLimiter(name = "timelimiterB", fallbackMethod = "fallbackSlow")
     public String callSlowWithTimeout(long delayMs) {
         try {
             return CompletableFuture.supplyAsync(() -> 
@@ -128,6 +128,11 @@ public class BClient {
     private String fallbackString(Throwable t) {
         log.warn("Fallback: {}", t.getMessage());
         return "fallback-default";
+    }
+
+    private String fallbackSlow(long delayMs, Throwable t) {
+        log.warn("TimeLimiter fallback triggered for delayMs {}: {}", delayMs, t.getMessage());
+        return "timeout-fallback: request took too long (>" + delayMs + "ms)";
     }
 
     private void busyWork() {

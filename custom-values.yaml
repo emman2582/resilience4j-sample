@@ -1,0 +1,22 @@
+# Custom values for resilience4j-stack
+# Override default settings here
+
+serviceA:
+  replicaCount: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+
+serviceB:
+  replicaCount: 1
+
+prometheus:
+  enabled: true
+
+grafana:
+  enabled: true
+  adminPassword: "admin"
+
+otelCollector:
+  enabled: true

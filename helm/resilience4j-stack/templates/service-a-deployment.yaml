@@ -1,0 +1,39 @@
+{{- if .Values.serviceA.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.serviceA.name }}
+  labels:
+    {{- include "resilience4j-stack.serviceA.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.serviceA.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "resilience4j-stack.serviceA.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resilience4j-stack.serviceA.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.serviceA.name }}
+        image: "{{ .Values.global.imageRegistry }}{{ .Values.serviceA.image.repository }}:{{ .Values.serviceA.image.tag }}"
+        imagePullPolicy: {{ .Values.serviceA.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.serviceA.service.targetPort }}
+          protocol: TCP
+        env:
+        - name: B_URL
+          value: {{ .Values.serviceA.env.B_URL | quote }}
+        livenessProbe:
+          {{- toYaml .Values.serviceA.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.serviceA.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.serviceA.resources | nindent 10 }}
+{{- end }}

@@ -1,0 +1,228 @@
+# Production values for resilience4j-stack
+# This file contains production-ready configuration
+
+global:
+  imageRegistry: ""
+  imagePullSecrets: []
+
+# Service A Configuration - Production
+serviceA:
+  enabled: true
+  name: service-a
+  image:
+    repository: r4j-sample-service-a
+    tag: "0.1.0"
+    pullPolicy: Always
+  replicaCount: 3
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8080
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  env:
+    B_URL: "http://service-b:8081"
+
+# Service B Configuration - Production
+serviceB:
+  enabled: true
+  name: service-b
+  image:
+    repository: r4j-sample-service-b
+    tag: "0.1.0"
+    pullPolicy: Always
+  replicaCount: 2
+  service:
+    type: ClusterIP
+    port: 8081
+    targetPort: 8081
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "500m"
+    limits:
+      memory: "1Gi"
+      cpu: "1000m"
+  livenessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8081
+    initialDelaySeconds: 60
+    periodSeconds: 30
+    timeoutSeconds: 10
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /actuator/health
+      port: 8081
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+# Prometheus Configuration - Production
+prometheus:
+  enabled: true
+  name: prometheus
+  image:
+    repository: prom/prometheus
+    tag: "v2.45.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 9090
+    targetPort: 9090
+  resources:
+    requests:
+      memory: "2Gi"
+      cpu: "500m"
+    limits:
+      memory: "4Gi"
+      cpu: "1000m"
+  config:
+    scrapeInterval: 30s
+    evaluationInterval: 30s
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClass: "standard"
+
+# Grafana Configuration - Production
+grafana:
+  enabled: true
+  name: grafana
+  image:
+    repository: grafana/grafana
+    tag: "10.0.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 3000
+    targetPort: 3000
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+  adminUser: admin
+  adminPassword: "change-me-in-production"
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClass: "standard"
+
+# OpenTelemetry Collector Configuration - Production
+otelCollector:
+  enabled: true
+  name: otel-collector
+  image:
+    repository: otel/opentelemetry-collector-contrib
+    tag: "0.80.0"
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    ports:
+      otlpHttp: 4318
+      prometheusMetrics: 9464
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Ingress Configuration - Production
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: resilience4j.yourdomain.com
+      paths:
+        - path: /
+          pathType: Prefix
+          service: service-a
+  tls:
+    - secretName: resilience4j-tls
+      hosts:
+        - resilience4j.yourdomain.com
+
+# ServiceMonitor for Prometheus Operator - Production
+serviceMonitor:
+  enabled: true
+  namespace: monitoring
+  interval: 30s
+  scrapeTimeout: 10s
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  serviceA:
+    minAvailable: 1
+  serviceB:
+    minAvailable: 1
+
+# Horizontal Pod Autoscaler
+autoscaling:
+  enabled: true
+  serviceA:
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  serviceB:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+
+# Network Policies
+networkPolicy:
+  enabled: true
+  ingress:
+    enabled: true
+  egress:
+    enabled: true
+
+# Security Context
+securityContext:
+  enabled: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 2000
+  capabilities:
+    drop:
+      - ALL
+
+# Pod Security Standards
+podSecurityContext:
+  enabled: true
+  seccompProfile:
+    type: RuntimeDefault

@@ -1,0 +1,22 @@
+{
+  "name": "resilience4j-nodejs-client",
+  "version": "1.0.0",
+  "description": "NodeJS client for Resilience4j Service A microservices",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "jest",
+    "test:performance": "node src/performance-test.js",
+    "test:all": "npm test && npm run test:performance"
+  },
+  "dependencies": {
+    "axios": "^1.7.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "autocannon": "^7.15.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

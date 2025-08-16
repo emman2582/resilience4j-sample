@@ -1,0 +1,17 @@
+{{- if .Values.serviceA.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.serviceA.name }}
+  labels:
+    {{- include "resilience4j-stack.serviceA.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.serviceA.service.type }}
+  ports:
+  - port: {{ .Values.serviceA.service.port }}
+    targetPort: {{ .Values.serviceA.service.targetPort }}
+    protocol: TCP
+    name: http
+  selector:
+    {{- include "resilience4j-stack.serviceA.selectorLabels" . | nindent 4 }}
+{{- end }}

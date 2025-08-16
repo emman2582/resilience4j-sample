@@ -47,6 +47,7 @@ Kubernetes deployment for Resilience4j sample application with complete monitori
 
 ## 🧪 Testing
 
+**Using cURL:**
 ```bash
 # Test basic connectivity
 curl http://localhost:8080/api/a/ok
@@ -56,6 +57,15 @@ curl "http://localhost:8080/api/a/flaky?failRate=60"
 curl "http://localhost:8080/api/a/slow?delayMs=2500"
 curl http://localhost:8080/api/a/bulkhead/x
 curl http://localhost:8080/api/a/limited
+```
+
+**Using NodeJS Client:**
+```bash
+# From project root
+cd ../nodejs-client
+npm install
+npm start                    # Test all endpoints
+npm run test:performance     # Load testing
 ```
 
 ## 📊 Monitoring Access

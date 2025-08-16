@@ -1,0 +1,36 @@
+{{- if .Values.serviceB.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.serviceB.name }}
+  labels:
+    {{- include "resilience4j-stack.serviceB.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.serviceB.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "resilience4j-stack.serviceB.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "resilience4j-stack.serviceB.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.global.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ .Values.serviceB.name }}
+        image: "{{ .Values.global.imageRegistry }}{{ .Values.serviceB.image.repository }}:{{ .Values.serviceB.image.tag }}"
+        imagePullPolicy: {{ .Values.serviceB.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.serviceB.service.targetPort }}
+          protocol: TCP
+        livenessProbe:
+          {{- toYaml .Values.serviceB.livenessProbe | nindent 10 }}
+        readinessProbe:
+          {{- toYaml .Values.serviceB.readinessProbe | nindent 10 }}
+        resources:
+          {{- toYaml .Values.serviceB.resources | nindent 10 }}
+{{- end }}
