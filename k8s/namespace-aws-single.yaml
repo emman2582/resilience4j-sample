@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: resilience4j-aws-single
+  labels:
+    environment: aws
+    deployment-type: single-node
+    node-count: "1"
+    app.kubernetes.io/name: resilience4j
+    app.kubernetes.io/instance: aws-single

@@ -1,0 +1,118 @@
+# AWS Multi Node Cluster Configuration
+
+global:
+  environment: aws
+  nodeCount: 2
+  imageRegistry: ""  # Will be set to ECR URI during deployment
+  namespace: resilience4j-aws-multi
+  labels:
+    environment: aws
+    deployment-type: multi-node
+    node-count: "2"
+    app.kubernetes.io/name: resilience4j
+    app.kubernetes.io/instance: aws-multi
+
+# Service A Configuration - Higher resources and replicas
+serviceA:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: r4j-sample-service-a
+    tag: "0.1.0"
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+  
+# Service B Configuration - Higher resources and replicas
+serviceB:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: r4j-sample-service-b
+    tag: "0.1.0"
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+
+# Monitoring Stack - Higher resources for multi-node
+prometheus:
+  enabled: true
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "300m"
+    limits:
+      memory: "2Gi"
+      cpu: "800m"
+
+grafana:
+  enabled: true
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "400m"
+
+otelCollector:
+  enabled: true
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "400m"
+
+# ALB Ingress Configuration
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+  hosts:
+    - host: ""  # ALB will provide hostname
+      paths:
+        - path: /
+          pathType: Prefix
+          service: service-a
+
+# Pod anti-affinity for multi-node distribution
+affinity:
+  enabled: true
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - service-a
+            - service-b
+        topologyKey: kubernetes.io/hostname
+
+# Enable persistent volumes for production
+persistence:
+  enabled: true
+  prometheus:
+    size: 10Gi
+    storageClass: gp2
+  grafana:
+    size: 5Gi
+    storageClass: gp2

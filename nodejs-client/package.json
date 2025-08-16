@@ -7,14 +7,17 @@
     "start": "node src/index.js",
     "test": "jest",
     "test:performance": "node src/performance-test.js",
+    "start:aws": "NODE_ENV=aws node src/index.js",
+    "test:aws": "NODE_ENV=aws npm run test:performance",
     "test:all": "npm test && npm run test:performance"
   },
   "dependencies": {
-    "axios": "^1.7.0"
+    "axios": "^1.7.0",
+    "dotenv": "^16.4.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "autocannon": "^7.15.0"
+    "autocannon": "^7.15.0",
+    "jest": "^29.7.0"
   },
   "engines": {
     "node": ">=18.0.0"

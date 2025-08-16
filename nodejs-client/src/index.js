@@ -1,7 +1,11 @@
+require('dotenv').config();
 const ServiceAClient = require('./client');
 
 async function main() {
   const client = new ServiceAClient();
+  
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'local'}`);
+  console.log(`🔗 Service URL: ${process.env.SERVICE_A_URL || 'http://localhost:8080'}`);
   
   console.log('🚀 Testing Resilience4j Service A endpoints...\n');
 

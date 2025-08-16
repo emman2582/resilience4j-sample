@@ -1,26 +1,32 @@
+require('dotenv').config();
 const autocannon = require('autocannon');
 
 async function runPerformanceTest() {
-  console.log('🚀 Starting performance tests...\n');
+  const baseURL = process.env.SERVICE_A_URL || 'http://localhost:8080';
+  const isAWS = process.env.NODE_ENV === 'aws';
+  
+  console.log('🚀 Starting performance tests...');
+  console.log(`🌐 Environment: ${process.env.NODE_ENV || 'local'}`);
+  console.log(`🔗 Target URL: ${baseURL}\n`);
 
   const tests = [
     {
       name: 'OK Endpoint',
-      url: 'http://localhost:8080/api/a/ok',
-      connections: 10,
-      duration: 10
+      url: `${baseURL}/api/a/ok`,
+      connections: isAWS ? 5 : 10,
+      duration: isAWS ? 15 : 10
     },
     {
       name: 'Rate Limited Endpoint',
-      url: 'http://localhost:8080/api/a/limited',
-      connections: 5,
-      duration: 10
+      url: `${baseURL}/api/a/limited`,
+      connections: isAWS ? 3 : 5,
+      duration: isAWS ? 15 : 10
     },
     {
       name: 'Bulkhead X Endpoint',
-      url: 'http://localhost:8080/api/a/bulkhead/x',
-      connections: 5,
-      duration: 10
+      url: `${baseURL}/api/a/bulkhead/x`,
+      connections: isAWS ? 3 : 5,
+      duration: isAWS ? 15 : 10
     }
   ];
 

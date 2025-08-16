@@ -1,0 +1,87 @@
+# Local Development Configuration
+
+global:
+  environment: local
+  nodeCount: 1
+  imageRegistry: ""
+  namespace: resilience4j-local
+  labels:
+    environment: local
+    deployment-type: minikube
+    app.kubernetes.io/name: resilience4j
+    app.kubernetes.io/instance: local
+
+# Service A Configuration
+serviceA:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: r4j-sample-service-a
+    tag: "0.1.0"
+    pullPolicy: Never
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+# Service B Configuration  
+serviceB:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: r4j-sample-service-b
+    tag: "0.1.0"
+    pullPolicy: Never
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Monitoring Stack
+prometheus:
+  enabled: true
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+grafana:
+  enabled: true
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+otelCollector:
+  enabled: true
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+# No ingress for local - use port forwarding
+ingress:
+  enabled: false
+
+# No affinity needed for single node
+affinity:
+  enabled: false
+
+# No persistent volumes for local development
+persistence:
+  enabled: false

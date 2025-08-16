@@ -1,0 +1,77 @@
+# AWS Multi Node Configuration
+environment: aws
+nodeCount: 2
+
+# Resource allocation for multi-node
+serviceA:
+  replicas: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+
+serviceB:
+  replicas: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+
+prometheus:
+  resources:
+    requests:
+      memory: "1Gi"
+      cpu: "300m"
+    limits:
+      memory: "2Gi"
+      cpu: "800m"
+
+grafana:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "400m"
+
+otelCollector:
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "400m"
+
+# Multi-node - enable anti-affinity
+affinity:
+  enabled: true
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+            - service-a
+            - service-b
+        topologyKey: kubernetes.io/hostname
+
+# ALB Ingress with multi-AZ
+ingress:
+  enabled: true
+  className: alb
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/subnets: subnet-xxx,subnet-yyy

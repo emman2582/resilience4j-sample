@@ -12,8 +12,9 @@ Kubernetes deployment for Resilience4j sample application with complete monitori
 
 ## 📋 Prerequisites
 
-- Kubernetes cluster (minikube recommended for local development)
-- kubectl configured and connected
+### Local Development
+- Minikube or Docker Desktop Kubernetes
+- kubectl configured
 - Local Docker images built:
   ```bash
   gradle clean build
@@ -21,9 +22,41 @@ Kubernetes deployment for Resilience4j sample application with complete monitori
   docker build -t r4j-sample-service-b:0.1.0 service-b/
   ```
 
+### AWS Cloud
+- AWS CLI configured
+- eksctl installed
+- kubectl installed
+- Docker for building images
+- ECR repositories (created automatically)
+
+## 🏗️ Deployment Architectures
+
+### Local (Minikube)
+```
+Namespace: resilience4j-local
+NodeJS Client → Port Forward → Service A → Service B
+Labels: environment=local, deployment-type=minikube
+```
+
+### AWS Single Node
+```
+Namespace: resilience4j-aws-single
+NodeJS Client → ALB → EKS (1 node) → Service A → Service B
+Labels: environment=aws, deployment-type=single-node, node-count=1
+```
+
+### AWS Multi Node
+```
+Namespace: resilience4j-aws-multi
+NodeJS Client → ALB → EKS (2 nodes) → Service A (2 replicas) → Service B (2 replicas)
+Labels: environment=aws, deployment-type=multi-node, node-count=2
+```
+
 ## 🚀 Quick Deployment
 
-1. **For Minikube users (load local images first):**
+### Local Development (Minikube)
+
+1. **Load local images:**
    ```bash
    cd k8s
    chmod +x *.sh
@@ -35,15 +68,30 @@ Kubernetes deployment for Resilience4j sample application with complete monitori
    ./deploy.sh
    ```
 
-3. **Check deployment status:**
-   ```bash
-   ./check-status.sh
-   ```
-
-4. **Setup port forwarding:**
+3. **Setup port forwarding:**
    ```bash
    ./port-forward.sh
    ```
+
+### AWS Cloud Deployment
+
+**Single Node Cluster:**
+```bash
+# Deploy single node EKS cluster
+./aws-deploy.sh resilience4j-cluster 1 us-east-1
+```
+
+**Multi Node Cluster:**
+```bash
+# Deploy 2-node EKS cluster
+./aws-deploy.sh resilience4j-cluster 2 us-east-1
+```
+
+**Check Status:**
+```bash
+./check-status.sh
+kubectl get ingress  # Get ALB URL
+```
 
 ## 🧪 Testing
 
@@ -75,6 +123,13 @@ npm run test:performance     # Load testing
 - **Service A Metrics**: http://localhost:8080/actuator/prometheus
 - **Service B Metrics**: http://localhost:8081/actuator/prometheus
 - **OTel Collector Metrics**: http://localhost:9464/metrics
+
+### Auto-Load Dashboards
+```bash
+# Load enhanced and golden metrics dashboards
+cd grafana
+./load-dashboards-k8s.sh resilience4j-local local
+```
 
 ## 🛠️ Troubleshooting
 
@@ -340,8 +395,20 @@ k8s/
 
 ## 🧹 Cleanup
 
+### Local (Minikube)
 ```bash
 ./cleanup.sh
+```
+
+### AWS Cloud
+```bash
+# Clean up EKS cluster and resources
+./aws-cleanup.sh resilience4j-cluster us-east-1
+
+# Or manual cleanup
+kubectl delete ingress --all
+helm uninstall resilience4j-stack
+eksctl delete cluster --name resilience4j-cluster --region us-east-1
 ```
 
 ## 📝 Notes

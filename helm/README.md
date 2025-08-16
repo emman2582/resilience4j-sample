@@ -13,11 +13,40 @@ The chart deploys:
 
 ## 📋 Prerequisites
 
-- Kubernetes 1.19+
+### Local Development
+- Kubernetes 1.19+ (Minikube/Docker Desktop)
 - Helm 3.8+
-- Docker images built locally or available in registry:
-  - `r4j-sample-service-a:0.1.0`
-  - `r4j-sample-service-b:0.1.0`
+- Docker images built locally
+
+### AWS Cloud
+- AWS CLI configured
+- eksctl installed
+- Helm 3.8+
+- ECR repositories (created automatically)
+- IAM permissions for EKS and ECR
+
+## 🏗️ Deployment Architectures
+
+### Local (Minikube)
+```
+Namespace: resilience4j-local
+Helm Chart → Minikube → Port Forward → Services
+Labels: environment=local, deployment-type=minikube
+```
+
+### AWS Single Node
+```
+Namespace: resilience4j-aws-single
+Helm Chart → EKS (1 node) → ALB Ingress → Services (1 replica each)
+Labels: environment=aws, deployment-type=single-node, node-count=1
+```
+
+### AWS Multi Node
+```
+Namespace: resilience4j-aws-multi
+Helm Chart → EKS (2 nodes) → ALB Ingress → Services (2 replicas each)
+Labels: environment=aws, deployment-type=multi-node, node-count=2
+```
 
 ## 🚀 Quick Start
 
@@ -36,16 +65,26 @@ minikube image load r4j-sample-service-b:0.1.0
 
 ### 2. Install the Chart
 
+**Local Development (Minikube):**
 ```bash
 # Install with default values
 helm install resilience4j-stack ./helm/resilience4j-stack
 
 # Install with custom values
 helm install resilience4j-stack ./helm/resilience4j-stack -f custom-values.yaml
+```
 
-# Install in specific namespace
-kubectl create namespace r4j-monitoring
-helm install resilience4j-stack ./helm/resilience4j-stack -n r4j-monitoring
+**AWS Cloud Deployment:**
+```bash
+# Single node EKS cluster
+./helm/aws-deploy.sh resilience4j-cluster 1 us-east-1
+
+# Multi-node EKS cluster  
+./helm/aws-deploy.sh resilience4j-cluster 2 us-east-1
+
+# Manual Helm install with AWS values
+helm install resilience4j-stack ./helm/resilience4j-stack \
+  -f ./helm/resilience4j-stack/values-aws-single.yaml
 ```
 
 ### 3. Access Services
@@ -135,8 +174,16 @@ ingress:
 
 ## 📊 Monitoring Setup
 
-### Grafana Dashboard Import
+### Grafana Dashboard Setup
 
+**Automatic Loading:**
+```bash
+# Load dashboards automatically
+cd grafana
+./load-dashboards-k8s.sh resilience4j-local local
+```
+
+**Manual Import:**
 1. Access Grafana at `http://localhost:3000` (admin/admin)
 2. Add Prometheus data source: `http://prometheus:9090`
 3. Import dashboard using ID `12139` or upload `grafana-dashboard-enhanced.json`
@@ -199,19 +246,60 @@ podDisruptionBudget:
   minAvailable: 1
 ```
 
-### External Image Registry
+### AWS ECR Configuration
 
 ```yaml
+# Automatically configured by aws-deploy.sh
 global:
-  imageRegistry: "your-registry.com/"
-  imagePullSecrets:
-    - name: registry-secret
+  environment: aws
+  imageRegistry: "123456789.dkr.ecr.us-east-1.amazonaws.com/"
 
 serviceA:
   image:
-    repository: resilience4j/service-a
-    tag: "v1.0.0"
+    repository: r4j-sample-service-a
+    tag: "0.1.0"
     pullPolicy: Always
+
+# ALB Ingress
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+```
+
+### AWS Resource Configurations
+
+**Single Node (values-aws-single.yaml):**
+```yaml
+serviceA:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+```
+
+**Multi Node (values-aws-multi.yaml):**
+```yaml
+serviceA:
+  replicaCount: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+
+# Pod anti-affinity for node distribution
+affinity:
+  enabled: true
 ```
 
 ## 🛠️ Management Commands
@@ -461,20 +549,31 @@ autoscaling:
 
 ## 🧹 Cleanup
 
+### Local Development
 ```bash
 # Uninstall Helm release
 helm uninstall resilience4j-stack
 
-# Clean up namespace (if created)
-kubectl delete namespace resilience4j
-
-# Remove persistent volumes (if any)
-kubectl get pv
-kubectl delete pv <pv-name>
-
-# Clean up Docker images (optional)
+# Clean up Docker images
 docker rmi r4j-sample-service-a:0.1.0
 docker rmi r4j-sample-service-b:0.1.0
+```
+
+### AWS Cloud
+```bash
+# Uninstall Helm release
+helm uninstall resilience4j-stack
+
+# Delete EKS cluster
+eksctl delete cluster --name resilience4j-cluster --region us-east-1
+
+# Clean up ECR repositories (optional)
+aws ecr delete-repository --repository-name r4j-sample-service-a --region us-east-1 --force
+aws ecr delete-repository --repository-name r4j-sample-service-b --region us-east-1 --force
+
+# Remove persistent volumes
+kubectl get pv
+kubectl delete pv <pv-name>
 ```
 
 ## 📚 Additional Resources

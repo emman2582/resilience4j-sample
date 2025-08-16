@@ -14,6 +14,16 @@ npm --version
 choco install nodejs -y
 ```
 
+### Environment Setup
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env for your environment:
+# Local: SERVICE_A_URL=http://localhost:8080
+# AWS: SERVICE_A_URL=https://your-alb-url.amazonaws.com
+```
+
 ### Installation
 ```bash
 cd nodejs-client
@@ -21,17 +31,32 @@ npm install
 ```
 
 ### Usage
+
+**Local Development:**
 ```bash
 # Run the client
 npm start
 
-# Run tests
-npm test
-
 # Run performance tests
 npm run test:performance
+```
 
-# Run all tests
+**AWS Cloud:**
+```bash
+# Configure for AWS in .env file
+# SERVICE_A_URL=https://your-alb-url.amazonaws.com
+
+# Run with AWS settings
+npm run start:aws
+npm run test:aws
+```
+
+**Testing:**
+```bash
+# Unit tests (environment independent)
+npm test
+
+# All tests
 npm run test:all
 ```
 
@@ -120,6 +145,9 @@ curl http://localhost:8080/actuator/health
 cd ..
 gradle :service-b:bootRun  # Terminal 1
 gradle :service-a:bootRun  # Terminal 2
+
+# Or use Docker Compose
+cd docker && docker compose up -d
 ```
 
 **"Port 8080 already in use"**
@@ -214,6 +242,24 @@ curl "http://localhost:8080/api/a/flaky?failRate=20"
 # Or use regular user for npm commands
 ```
 
+## ☁️ Cloud Support
+
+The client supports both **local** and **AWS cloud** deployments:
+
+### Local Environment
+- Direct connection to localhost:8080
+- Fast timeouts (10s)
+- Higher concurrency (10 connections)
+
+### AWS Cloud Environment  
+- ALB/ELB endpoints
+- API Gateway endpoints
+- Longer timeouts (15-30s)
+- Lower concurrency (3-5 connections)
+- Auto-detection via environment variables
+
+See [aws-deploy.md](aws-deploy.md) for complete AWS setup guide.
+
 ## 🏗️ Project Structure
 
 ```
@@ -224,6 +270,8 @@ nodejs-client/
 │   └── performance-test.js # Performance testing
 ├── test/
 │   └── client.test.js     # Unit tests
+├── .env.example           # Environment template
+├── aws-deploy.md          # AWS deployment guide
 ├── package.json           # Dependencies
 └── README.md             # Documentation
 ```
@@ -249,10 +297,15 @@ nodejs-client/
 # Stop running processes
 Ctrl+C
 
-# Clean dependencies
+# Clean dependencies and cache
 rmdir /s /q node_modules
 del package-lock.json
+npm cache clean --force
 
-# Stop services
-# Kill gradle processes in other terminals
+# Remove environment file
+del .env
+
+# Stop services (from project root)
+cd ..
+taskkill /F /IM java.exe  # Stop gradle processes
 ```

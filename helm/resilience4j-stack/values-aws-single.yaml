@@ -1,0 +1,100 @@
+# AWS Single Node Cluster Configuration
+
+global:
+  environment: aws
+  nodeCount: 1
+  imageRegistry: ""  # Will be set to ECR URI during deployment
+  namespace: resilience4j-aws-single
+  labels:
+    environment: aws
+    deployment-type: single-node
+    node-count: "1"
+    app.kubernetes.io/name: resilience4j
+    app.kubernetes.io/instance: aws-single
+
+# Service A Configuration
+serviceA:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: r4j-sample-service-a
+    tag: "0.1.0"
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+  
+# Service B Configuration  
+serviceB:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: r4j-sample-service-b
+    tag: "0.1.0"
+    pullPolicy: Always
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Monitoring Stack - Reduced resources for single node
+prometheus:
+  enabled: true
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "200m"
+    limits:
+      memory: "1Gi"
+      cpu: "500m"
+
+grafana:
+  enabled: true
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+otelCollector:
+  enabled: true
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "100m"
+    limits:
+      memory: "512Mi"
+      cpu: "200m"
+
+# ALB Ingress Configuration
+ingress:
+  enabled: true
+  className: "alb"
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+  hosts:
+    - host: ""  # ALB will provide hostname
+      paths:
+        - path: /
+          pathType: Prefix
+          service: service-a
+
+# No pod anti-affinity for single node
+affinity:
+  enabled: false
+
+# Disable persistent volumes for simplicity
+persistence:
+  enabled: false

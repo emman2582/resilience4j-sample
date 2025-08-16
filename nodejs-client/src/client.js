@@ -1,10 +1,17 @@
 const axios = require('axios');
 
 class ServiceAClient {
-  constructor(baseURL = 'http://localhost:8080') {
+  constructor(baseURL) {
+    // Auto-detect environment if no baseURL provided
+    if (!baseURL) {
+      baseURL = process.env.SERVICE_A_URL || 
+                process.env.AWS_SERVICE_A_URL || 
+                'http://localhost:8080';
+    }
+    
     this.client = axios.create({
       baseURL,
-      timeout: 5000,
+      timeout: parseInt(process.env.REQUEST_TIMEOUT) || 10000,
       headers: { 'Content-Type': 'application/json' }
     });
   }
