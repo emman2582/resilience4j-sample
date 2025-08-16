@@ -16,12 +16,16 @@ choco install nodejs -y
 
 ### Environment Setup
 ```bash
-# Copy environment template
-cp .env.example .env
+# Setup script (recommended)
+npm run setup
 
-# Edit .env for your environment:
-# Local: SERVICE_A_URL=http://localhost:8080
-# AWS: SERVICE_A_URL=https://your-alb-url.amazonaws.com
+# Or manual setup:
+# Local development
+cp config/.env.local .env
+
+# AWS cloud
+cp config/.env.aws .env
+# Edit .env with your actual API Gateway URL
 ```
 
 ### Installation
@@ -53,11 +57,17 @@ npm run test:aws
 
 **Testing:**
 ```bash
+# Setup environment and dependencies
+npm run setup
+
 # Unit tests (environment independent)
 npm test
 
 # All tests
 npm run test:all
+
+# Comprehensive testing (includes service checks)
+npm run test:comprehensive
 ```
 
 ## 📋 API Endpoints
@@ -258,7 +268,7 @@ The client supports both **local** and **AWS cloud** deployments:
 - Lower concurrency (3-5 connections)
 - Auto-detection via environment variables
 
-See [aws-deploy.md](aws-deploy.md) for complete AWS setup guide.
+See the main project README and aws-lambda folder for AWS deployment options.
 
 ## 🏗️ Project Structure
 
@@ -270,8 +280,17 @@ nodejs-client/
 │   └── performance-test.js # Performance testing
 ├── test/
 │   └── client.test.js     # Unit tests
-├── .env.example           # Environment template
-├── aws-deploy.md          # AWS deployment guide
+├── config/
+│   ├── .env.example       # Environment template
+│   ├── .env.local         # Local development config
+│   ├── .env.aws           # AWS cloud config
+│   └── jest.config.js     # Jest test configuration
+├── scripts/
+│   ├── setup.sh           # Setup script
+│   ├── test-all.sh        # Comprehensive testing
+│   └── cleanup.sh         # Cleanup script
+├── docs/
+│   └── aws-deploy.md      # AWS deployment guide
 ├── package.json           # Dependencies
 └── README.md             # Documentation
 ```
@@ -298,7 +317,13 @@ nodejs-client/
 ./cleanup.sh
 ```
 
-**Windows:**
+**All Platforms:**
+```bash
+# Use cleanup script
+npm run cleanup
+```
+
+**Manual Cleanup (Windows):**
 ```cmd
 # Stop running processes
 Ctrl+C

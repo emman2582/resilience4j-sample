@@ -4,8 +4,8 @@ Automatically load enhanced and golden metrics dashboards into Grafana for both 
 
 ## 📊 Available Dashboards
 
-- **Enhanced Dashboard** (`grafana-dashboard-enhanced.json`) - Comprehensive Resilience4j metrics
-- **Golden Metrics Dashboard** (`grafana-dashboard-golden-metrics.json`) - Key performance indicators
+- **Enhanced Dashboard** (`../docker/dashboards/grafana-dashboard-enhanced.json`) - Comprehensive Resilience4j metrics
+- **Golden Metrics Dashboard** (`../docker/dashboards/grafana-dashboard-golden-metrics.json`) - Key performance indicators
 
 ## 🚀 Usage
 
@@ -149,7 +149,11 @@ grafana/
 ├── load-dashboards.sh           # Main loader script (Linux/Mac)
 ├── load-dashboards.bat          # Windows loader script
 ├── load-dashboards-k8s.sh       # Kubernetes-specific loader
+└── README.md                    # This file
+
+../docker/dashboards/
 ├── grafana-dashboard-enhanced.json      # Enhanced dashboard
 ├── grafana-dashboard-golden-metrics.json # Golden metrics dashboard
-└── README.md                    # This file
+├── grafana-dashboard-updated.json       # Updated dashboard
+└── grafana-dashboard.json               # Basic dashboard
 ```

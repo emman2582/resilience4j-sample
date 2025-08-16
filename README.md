@@ -16,10 +16,11 @@ resilience4j-sample/
 ├── service-b/              # Downstream service
 ├── nodejs-client/         # NodeJS client (Node.js v24+)
 ├── docker/                # Docker Compose deployment
-│   ├── docker-compose.yml # Full stack deployment
-│   ├── prometheus.yml     # Metrics scraping config
-│   ├── otel-collector-config.yml # OpenTelemetry config
-│   └── grafana-dashboard-*.json  # Grafana dashboards
+│   ├── configs/           # Configuration files
+│   ├── dashboards/        # Grafana dashboards
+│   ├── scripts/           # Testing scripts
+│   ├── swarm/            # Docker Swarm deployment
+│   └── docker-compose.yml # Full stack deployment
 ├── k8s/                   # Kubernetes manifests
 ├── helm/                  # Helm charts
 ├── grafana/               # Dashboard loading scripts
@@ -92,7 +93,7 @@ docker compose up -d
 
 ### Docker Swarm (With Autoscaling)
 ```bash
-cd docker
+cd docker/swarm
 ./setup-swarm.sh
 ./start-autoscaler.sh  # Optional: automated scaling
 ```
@@ -155,7 +156,7 @@ cd grafana
 **Manual Setup:**
 1. Access Grafana at http://localhost:3000 (admin/admin)
 2. Add Prometheus data source: `http://prometheus:9090`
-3. Import dashboard ID `12139` or use `grafana-dashboard-enhanced.json`
+3. Import dashboard ID `12139` or use `docker/dashboards/grafana-dashboard-enhanced.json`
 
 ### Key Metrics
 - `resilience4j_circuitbreaker_state`
@@ -185,7 +186,7 @@ cd grafana
 
 **Docker Compose:**
 ```bash
-cd docker && ./cleanup.sh
+cd docker && ./scripts/cleanup.sh
 ```
 
 **Kubernetes (Local):**

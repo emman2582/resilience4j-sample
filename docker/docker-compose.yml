@@ -23,7 +23,7 @@ services:
     image: prom/prometheus:v2.45.0
     container_name: prometheus
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
     ports:
@@ -46,7 +46,7 @@ services:
     container_name: otel-collector
     command: ["--config=/etc/otel-collector-config.yml"]
     volumes:
-      - ./otel-collector-config.yml:/etc/otel-collector-config.yml
+      - ./configs/otel-collector-config.yml:/etc/otel-collector-config.yml
     ports:
       - "4318:4318"   # OTLP HTTP (metrics)
       - "9464:9464"   # Prometheus metrics exporter

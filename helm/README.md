@@ -480,7 +480,7 @@ kubectl logs -l app=grafana
 kubectl exec -it <grafana-pod> -- wget -qO- http://prometheus:9090/api/v1/query?query=up
 
 # Import dashboard manually
-# Use grafana-dashboard-enhanced.json from project root
+# Use docker/dashboards/grafana-dashboard-enhanced.json
 ```
 
 #### 5. Resource Constraints

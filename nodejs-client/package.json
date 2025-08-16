@@ -5,11 +5,14 @@
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
-    "test": "jest",
+    "test": "jest --config config/jest.config.js",
     "test:performance": "node src/performance-test.js",
     "start:aws": "NODE_ENV=aws node src/index.js",
     "test:aws": "NODE_ENV=aws npm run test:performance",
-    "test:all": "npm test && npm run test:performance"
+    "test:all": "npm test && npm run test:performance",
+    "setup": "./scripts/setup.sh",
+    "test:comprehensive": "./scripts/test-all.sh",
+    "cleanup": "./scripts/cleanup.sh"
   },
   "dependencies": {
     "axios": "^1.7.0",
