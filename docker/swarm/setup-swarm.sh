@@ -12,11 +12,12 @@ fi
 
 # Build images
 echo "🔨 Building Docker images..."
-cd ..
-gradle clean build
-docker build -t r4j-sample-service-a:0.1.0 service-a/
-docker build -t r4j-sample-service-b:0.1.0 service-b/
-cd docker
+./build-images.sh
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to build images"
+    exit 1
+fi
 
 # Deploy stack
 echo "🚀 Deploying stack with scaling..."
@@ -30,6 +31,11 @@ sleep 30
 echo "📊 Service status:"
 docker service ls
 
+# Fix metrics collection for Swarm
+echo "🔧 Setting up metrics collection..."
+sleep 10
+./fix-swarm-metrics.sh
+
 echo "✅ Docker Swarm setup completed!"
 echo "🌐 Access points:"
 echo "  - Service A (Load Balanced): http://localhost"
@@ -39,3 +45,5 @@ echo "  - Grafana: http://localhost:3000"
 
 echo "🔧 Scale services manually:"
 echo "  docker service scale r4j-stack_service-a=3"
+echo "📈 Load dashboards:"
+echo "  cd ../grafana && ./scripts/load-dashboards.sh"

@@ -4,8 +4,8 @@ Automatically load enhanced and golden metrics dashboards into Grafana for both 
 
 ## 📊 Available Dashboards
 
-- **Enhanced Dashboard** (`../docker/dashboards/grafana-dashboard-enhanced.json`) - Comprehensive Resilience4j metrics
-- **Golden Metrics Dashboard** (`../docker/dashboards/grafana-dashboard-golden-metrics.json`) - Key performance indicators
+- **Enhanced Dashboard** (`dashboards/grafana-dashboard-enhanced.json`) - Comprehensive Resilience4j metrics
+- **Golden Metrics Dashboard** (`dashboards/grafana-dashboard-golden-metrics.json`) - Key performance indicators
 
 ## 🚀 Usage
 
@@ -29,7 +29,7 @@ kubectl apply -f k8s/ -n resilience4j-local
 
 # Load dashboards
 cd grafana
-./load-dashboards-k8s.sh resilience4j-local local
+./scripts/load-dashboards-k8s.sh resilience4j-local local
 ```
 
 ### AWS Cloud
@@ -59,13 +59,24 @@ cd grafana
 **Direct Grafana URL:**
 ```bash
 # Custom Grafana instance
-./load-dashboards.sh http://your-grafana-url:3000 admin password aws
+./scripts/load-dashboards.sh http://your-grafana-url:3000 admin password aws
 ```
 
 **Windows:**
 ```cmd
 # Load dashboards on Windows
-load-dashboards.bat http://localhost:3000 admin admin local
+scripts\load-dashboards.bat http://localhost:3000 admin admin local
+```
+
+### Prometheus Datasource Only
+
+**Setup datasource separately:**
+```bash
+# Linux/Mac
+./scripts/setup-prometheus-datasource.sh http://localhost:3000 admin admin local
+
+# Windows
+scripts\setup-prometheus-datasource.bat http://localhost:3000 admin admin local
 ```
 
 ## ⚙️ Configuration
@@ -94,11 +105,12 @@ load-dashboards.bat http://localhost:3000 admin admin local
 ## 🔧 Features
 
 - ✅ **Automatic Grafana readiness check**
-- ✅ **Prometheus data source setup**
+- ✅ **Automated Prometheus datasource setup**
 - ✅ **Dashboard overwrite protection**
 - ✅ **Environment-aware configuration**
 - ✅ **Error handling and reporting**
 - ✅ **Windows and Linux support**
+- ✅ **Datasource connection testing**
 
 ## 📈 Dashboard Content
 
@@ -146,14 +158,19 @@ kubectl exec -it grafana-pod -n resilience4j-local -- curl http://prometheus:909
 
 ```
 grafana/
-├── load-dashboards.sh           # Main loader script (Linux/Mac)
-├── load-dashboards.bat          # Windows loader script
-├── load-dashboards-k8s.sh       # Kubernetes-specific loader
+├── scripts/                     # Dashboard loading scripts
+│   ├── load-dashboards.sh       # Main loader script (Linux/Mac)
+│   ├── load-dashboards.bat      # Windows loader script
+│   ├── load-dashboards-k8s.sh   # Kubernetes-specific loader
+│   ├── setup-prometheus-datasource.sh   # Prometheus setup (Linux/Mac)
+│   ├── setup-prometheus-datasource.bat  # Prometheus setup (Windows)
+│   └── cleanup.sh               # Cleanup script
+├── dashboards/                  # Dashboard JSON files
+│   ├── grafana-dashboard-enhanced.json      # Enhanced dashboard
+│   └── grafana-dashboard-golden-metrics.json # Golden metrics dashboard
 └── README.md                    # This file
 
-../docker/dashboards/
-├── grafana-dashboard-enhanced.json      # Enhanced dashboard
-├── grafana-dashboard-golden-metrics.json # Golden metrics dashboard
+../docker/dashboards/            # Additional dashboards
 ├── grafana-dashboard-updated.json       # Updated dashboard
 └── grafana-dashboard.json               # Basic dashboard
 ```

@@ -9,7 +9,7 @@ echo "🔧 Setting up autoscaling for namespace: $NAMESPACE"
 
 # Install metrics server
 echo "📊 Installing metrics server..."
-kubectl apply -f autoscaling/metrics-server.yaml
+kubectl apply -f ../manifests/autoscaling/metrics-server.yaml
 
 # Wait for metrics server to be ready
 echo "⏳ Waiting for metrics server..."
@@ -34,12 +34,12 @@ fi
 
 # Apply HPA
 echo "📊 Applying Horizontal Pod Autoscaler..."
-kubectl apply -f autoscaling/hpa-service-a.yaml -n $NAMESPACE
+kubectl apply -f ../manifests/autoscaling/hpa-service-a.yaml -n $NAMESPACE
 
 # Apply VPA if enabled
 if [ "$ENABLE_VPA" = "true" ]; then
     echo "📈 Applying Vertical Pod Autoscaler..."
-    kubectl apply -f autoscaling/vpa-service-a.yaml -n $NAMESPACE
+    kubectl apply -f ../manifests/autoscaling/vpa-service-a.yaml -n $NAMESPACE
 fi
 
 echo "✅ Autoscaling setup completed!"

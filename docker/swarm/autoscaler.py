@@ -38,7 +38,7 @@ class DockerAutoscaler:
                                   capture_output=True, text=True)
             services = [json.loads(line) for line in result.stdout.strip().split('\n') if line]
             for service in services:
-                if self.service_name in service['Name']:
+                if f"r4j-stack_{self.service_name}" == service['Name']:
                     return int(service['Replicas'].split('/')[1])
         except Exception as e:
             logger.error(f"Error getting replicas: {e}")
@@ -46,7 +46,7 @@ class DockerAutoscaler:
 
     def scale_service(self, replicas):
         try:
-            service_name = f"docker_{self.service_name}"
+            service_name = f"r4j-stack_{self.service_name}"
             subprocess.run(['docker', 'service', 'scale', f"{service_name}={replicas}"], 
                          check=True)
             logger.info(f"Scaled {service_name} to {replicas} replicas")

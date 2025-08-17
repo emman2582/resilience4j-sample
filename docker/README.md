@@ -35,23 +35,41 @@ docker/
 
 ### Standard Deployment
 ```bash
-# Build images
-gradle clean build
-docker build -t r4j-sample-service-a:0.1.0 service-a/
-docker build -t r4j-sample-service-b:0.1.0 service-b/
+# Build images (Linux/Mac)
+./build.sh
+
+# Build images (Windows)
+.\build.bat
 
 # Start stack
 docker compose up -d
 ```
 
 ### Docker Swarm Deployment
+
+**Prerequisites:**
+- Python 3.x (for autoscaler)
+- Docker with Swarm mode
+
 ```bash
+# From project root, build images first
+./gradlew clean build
+
 # Initialize swarm
-cd swarm
+cd docker/swarm
 ./setup-swarm.sh
 
-# Start autoscaler (optional)
-./start-autoscaler.sh
+# Start autoscaler (optional - requires Python)
+./start-autoscaler.sh     # Linux/Mac
+# OR
+start-autoscaler.bat      # Windows
+```
+
+**Alternative - Build from swarm directory:**
+```bash
+cd docker/swarm
+./build-images.sh  # Builds from project root
+./setup-swarm.sh   # Skip build step
 ```
 
 ## 📊 Access Points
@@ -61,6 +79,39 @@ cd swarm
 - **Prometheus**: http://localhost:9090
 - **Grafana**: http://localhost:3000 (admin/admin)
 - **Load Balancer**: http://localhost (Swarm only)
+
+## 📈 Monitoring Setup
+
+### Automatic Dashboard Loading
+```bash
+# Load Grafana dashboards automatically
+cd ../grafana
+./scripts/load-dashboards.sh
+```
+
+**Note:** Dashboard loading scripts work without external dependencies (no `jq` required).
+
+### Manual Prometheus Datasource Setup
+```bash
+# Setup Prometheus datasource only
+cd ../grafana
+./scripts/setup-prometheus-datasource.sh http://localhost:3000 admin admin local
+```
+
+### Prometheus Configuration
+Prometheus is configured to scrape metrics from:
+- Service A: `http://service-a:8080/actuator/prometheus`
+- Service B: `http://service-b:8081/actuator/prometheus`
+
+Configuration file: [`configs/prometheus.yml`](configs/prometheus.yml)
+
+### Available Dashboards
+- **Enhanced Dashboard**: Comprehensive Resilience4j metrics
+- **Golden Metrics Dashboard**: Key performance indicators (SLIs)
+- **Updated Dashboard**: Latest monitoring improvements
+- **Basic Dashboard**: Simple overview metrics
+
+Dashboard files: [`dashboards/`](dashboards/)
 
 ## 🧪 Testing
 
@@ -73,7 +124,41 @@ cd swarm
 
 # Test scaling (Swarm)
 ./swarm/test-scaling.sh
+
+# Test autoscaler implementation
+./swarm/test-autoscaler.sh
+
+# Test monitoring stack
+curl http://localhost:9090/api/v1/query?query=up  # Prometheus health
+curl http://localhost:3000/api/health             # Grafana health
+
+# Diagnose metrics issues
+./scripts/diagnose-metrics.sh
+
+# Fix common metrics problems
+./scripts/fix-metrics.sh
 ```
+
+## 🔧 Troubleshooting
+
+### No Metrics in Grafana Dashboards
+```bash
+# Diagnose the issue
+./scripts/diagnose-metrics.sh
+
+# Apply common fixes
+./scripts/fix-metrics.sh
+
+# Manual checks
+curl http://localhost:8080/actuator/prometheus  # Service metrics
+curl http://localhost:9090/api/v1/targets       # Prometheus targets
+```
+
+**Common Solutions:**
+1. **Generate traffic**: Call service endpoints to create metrics
+2. **Wait for scraping**: Prometheus scrapes every 5 seconds
+3. **Check time range**: Set Grafana time range to "Last 5 minutes"
+4. **Restart services**: `docker compose restart`
 
 ## 🧹 Cleanup
 
@@ -81,7 +166,13 @@ cd swarm
 # Standard cleanup
 ./scripts/cleanup.sh
 
-# Swarm cleanup
+# Windows cleanup
+./scripts/cleanup.bat
+
+# Force cleanup (if containers are stuck)
+./scripts/force-cleanup.sh
+
+# Manual Swarm cleanup
 docker stack rm resilience4j
 docker swarm leave --force
 ```

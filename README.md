@@ -40,11 +40,16 @@ choco install gradle --version=8.5.0 -y
 ### Local Development
 ```bash
 # Build
-gradle clean build
+./gradlew clean build
+
+# If build fails, try fix script:
+./fix-gradle-build.sh      # Linux/Mac
+# OR
+fix-gradle-build.bat       # Windows
 
 # Run services
-gradle :service-b:bootRun  # Terminal 1
-gradle :service-a:bootRun  # Terminal 2
+./gradlew :service-b:bootRun  # Terminal 1
+./gradlew :service-a:bootRun  # Terminal 2
 ```
 
 ### Test Resilience Patterns
@@ -80,9 +85,15 @@ npm run test:performance     # Load testing
 
 ### Build Images
 ```bash
-gradle clean build
+# From project root
+./gradlew clean build
 docker build -t r4j-sample-service-a:0.1.0 service-a/
 docker build -t r4j-sample-service-b:0.1.0 service-b/
+
+# Or from docker folder
+cd docker
+./build.sh  # Linux/Mac
+.\build.bat # Windows
 ```
 
 ### Docker Compose (Full Stack)

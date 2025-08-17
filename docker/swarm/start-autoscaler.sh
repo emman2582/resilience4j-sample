@@ -5,14 +5,24 @@
 echo "🤖 Starting Docker Autoscaler..."
 
 # Check if Python is available
-if ! command -v python3 &> /dev/null; then
-    echo "❌ Python3 is required for autoscaler"
+PYTHON_CMD=""
+if command -v python3 &> /dev/null; then
+    PYTHON_CMD="python3"
+    PIP_CMD="pip3"
+elif command -v python &> /dev/null; then
+    PYTHON_CMD="python"
+    PIP_CMD="pip"
+else
+    echo "❌ Python is required for autoscaler"
+    echo "💡 Install Python from: https://www.python.org/downloads/"
     exit 1
 fi
 
+echo "🐍 Using Python: $PYTHON_CMD"
+
 # Install required Python packages
 echo "📦 Installing Python dependencies..."
-pip3 install requests
+$PIP_CMD install requests
 
 # Check if Docker Swarm is active
 if ! docker info | grep -q "Swarm: active"; then
@@ -22,4 +32,4 @@ fi
 
 # Start autoscaler
 echo "🚀 Starting autoscaler..."
-python3 autoscaler.py
+$PYTHON_CMD autoscaler.py

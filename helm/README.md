@@ -77,14 +77,14 @@ helm install resilience4j-stack ./helm/resilience4j-stack -f custom-values.yaml
 **AWS Cloud Deployment:**
 ```bash
 # Single node EKS cluster
-./helm/aws-deploy.sh resilience4j-cluster 1 us-east-1
+./scripts/aws-deploy.sh resilience4j-cluster 1 us-east-1
 
 # Multi-node EKS cluster  
-./helm/aws-deploy.sh resilience4j-cluster 2 us-east-1
+./scripts/aws-deploy.sh resilience4j-cluster 2 us-east-1
 
 # Manual Helm install with AWS values
-helm install resilience4j-stack ./helm/resilience4j-stack \
-  -f ./helm/resilience4j-stack/values-aws-single.yaml
+helm install resilience4j-stack ./resilience4j-stack \
+  -f ./environments/values-aws-single.yaml
 ```
 
 ### 3. Access Services

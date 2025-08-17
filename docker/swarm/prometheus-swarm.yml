@@ -1,0 +1,45 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'service-a-swarm'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names:
+          - 'tasks.r4j-stack_service-a'
+        type: 'A'
+        port: 8080
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'tasks.r4j-stack_service-a:8080'
+
+  - job_name: 'service-b-swarm'
+    metrics_path: '/actuator/prometheus'
+    dns_sd_configs:
+      - names:
+          - 'tasks.r4j-stack_service-b'
+        type: 'A'
+        port: 8081
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'tasks.r4j-stack_service-b:8081'
+
+  - job_name: 'service-a-direct'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['service-a:8080']
+    scrape_interval: 5s
+
+  - job_name: 'service-b-direct'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['service-b:8081']
+    scrape_interval: 5s

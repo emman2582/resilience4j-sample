@@ -46,8 +46,8 @@ aws ecr get-login-password --region $REGION | docker login --username AWS --pass
 
 # Build and push images
 echo "🔨 Building and pushing images..."
-cd ..
-gradle clean build
+cd ../..
+./gradlew clean build
 
 ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 ECR_URI=$ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
@@ -62,38 +62,38 @@ docker push $ECR_URI/r4j-sample-service-a:0.1.0
 docker push $ECR_URI/r4j-sample-service-b:0.1.0
 
 # Deploy with AWS-specific configuration
-cd k8s
+cd ../k8s/scripts
 echo "🚀 Deploying services to EKS..."
 
 # Determine namespace based on node count
 if [ "$NODE_COUNT" -eq 1 ]; then
     NAMESPACE="resilience4j-aws-single"
     DEPLOYMENT_TYPE="single-node"
-    kubectl apply -f namespace-aws-single.yaml
+    kubectl apply -f ../environments/namespace-aws-single.yaml
 else
     NAMESPACE="resilience4j-aws-multi"
     DEPLOYMENT_TYPE="multi-node"
-    kubectl apply -f namespace-aws-multi.yaml
+    kubectl apply -f ../environments/namespace-aws-multi.yaml
 fi
 
 echo "📦 Using namespace: $NAMESPACE"
 
 # Create AWS-specific deployments with proper labels
-for file in deployments/*.yaml; do
+for file in ../manifests/deployments/*.yaml; do
     filename=$(basename "$file")
     sed "s|r4j-sample-service-a:0.1.0|$ECR_URI/r4j-sample-service-a:0.1.0|g; \
          s|r4j-sample-service-b:0.1.0|$ECR_URI/r4j-sample-service-b:0.1.0|g; \
          s|imagePullPolicy: Never|imagePullPolicy: Always|g; \
-         s|namespace: default|namespace: $NAMESPACE|g" "$file" > "deployments/${filename%.yaml}-aws.yaml"
+         s|namespace: default|namespace: $NAMESPACE|g" "$file" > "../manifests/deployments/${filename%.yaml}-aws.yaml"
     
     # Add environment labels
-    sed -i "s|labels:|labels:\n    environment: aws\n    deployment-type: $DEPLOYMENT_TYPE\n    node-count: \"$NODE_COUNT\"|g" "deployments/${filename%.yaml}-aws.yaml"
+    sed -i "s|labels:|labels:\n    environment: aws\n    deployment-type: $DEPLOYMENT_TYPE\n    node-count: \"$NODE_COUNT\"|g" "../manifests/deployments/${filename%.yaml}-aws.yaml"
 done
 
 # Apply configurations with namespace
-kubectl apply -f configs/ -n $NAMESPACE
-kubectl apply -f deployments/*-aws.yaml -n $NAMESPACE
-kubectl apply -f services/ -n $NAMESPACE
+kubectl apply -f ../manifests/configs/ -n $NAMESPACE
+kubectl apply -f ../manifests/deployments/*-aws.yaml -n $NAMESPACE
+kubectl apply -f ../manifests/services/ -n $NAMESPACE
 
 # Create ALB Ingress with proper labels
 echo "🌐 Creating ALB Ingress..."

@@ -29,22 +29,28 @@ load_dashboard() {
     
     echo "📈 Loading dashboard: $dashboard_name"
     
-    # Create dashboard payload
-    local payload=$(jq -n --argjson dashboard "$(cat "$dashboard_file")" '{
-        dashboard: $dashboard,
-        overwrite: true,
-        inputs: [],
-        folderId: 0
-    }')
+    # Create dashboard payload without jq
+    local temp_payload="/tmp/dashboard_payload_$$.json"
+    echo '{' > "$temp_payload"
+    echo '  "dashboard":' >> "$temp_payload"
+    cat "$dashboard_file" >> "$temp_payload"
+    echo ',' >> "$temp_payload"
+    echo '  "overwrite": true,' >> "$temp_payload"
+    echo '  "inputs": [],' >> "$temp_payload"
+    echo '  "folderId": 0' >> "$temp_payload"
+    echo '}' >> "$temp_payload"
     
     # Load dashboard
     local response=$(curl -s -X POST \
         -H "Content-Type: application/json" \
         -u "$GRAFANA_USER:$GRAFANA_PASS" \
-        -d "$payload" \
+        -d @"$temp_payload" \
         "$GRAFANA_URL/api/dashboards/db")
     
-    if echo "$response" | jq -e '.status == "success"' >/dev/null 2>&1; then
+    # Clean up temp file
+    rm -f "$temp_payload"
+    
+    if echo "$response" | grep -q '"status":"success"'; then
         echo "✅ Dashboard loaded: $dashboard_name"
     else
         echo "❌ Failed to load dashboard: $dashboard_name"
@@ -53,37 +59,32 @@ load_dashboard() {
 }
 
 # Set up Prometheus data source
-echo "🔗 Setting up Prometheus data source..."
-if [ "$ENVIRONMENT" = "local" ]; then
-    PROMETHEUS_URL="http://prometheus:9090"
-else
-    PROMETHEUS_URL="http://prometheus.resilience4j-aws-single:9090"
+echo "🔗 Setting up Prometheus datasource..."
+"$(dirname "$0")/setup-prometheus-datasource.sh" "$GRAFANA_URL" "$GRAFANA_USER" "$GRAFANA_PASS" "$ENVIRONMENT"
+
+if [ $? -ne 0 ]; then
+    echo "❌ Failed to setup Prometheus datasource"
+    exit 1
 fi
 
-datasource_payload=$(cat << EOF
-{
-  "name": "Prometheus",
-  "type": "prometheus",
-  "url": "$PROMETHEUS_URL",
-  "access": "proxy",
-  "isDefault": true
-}
-EOF
-)
+# Load dashboard files from dashboards directory
+cd "$(dirname "$0")/../dashboards"
+if [ ! -d "." ]; then
+    echo "❌ Dashboards directory not found"
+    exit 1
+fi
 
-curl -s -X POST \
-    -H "Content-Type: application/json" \
-    -u "$GRAFANA_USER:$GRAFANA_PASS" \
-    -d "$datasource_payload" \
-    "$GRAFANA_URL/api/datasources" >/dev/null
-
-# Load all dashboard files
-cd "$(dirname "$0")"
+dashboard_count=0
 for dashboard in *.json; do
     if [ -f "$dashboard" ]; then
         load_dashboard "$dashboard"
+        ((dashboard_count++))
     fi
 done
+
+if [ $dashboard_count -eq 0 ]; then
+    echo "⚠️  No dashboard files found in dashboards directory"
+fi
 
 echo "✅ Dashboard loading completed!"
 echo "🌐 Access Grafana at: $GRAFANA_URL"
