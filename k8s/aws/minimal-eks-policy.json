@@ -1,0 +1,30 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "eks:*",
+        "ec2:*",
+        "iam:CreateRole",
+        "iam:DeleteRole",
+        "iam:AttachRolePolicy",
+        "iam:DetachRolePolicy",
+        "iam:CreatePolicy",
+        "iam:DeletePolicy",
+        "iam:GetRole",
+        "iam:GetPolicy",
+        "iam:ListAttachedRolePolicies",
+        "iam:PassRole",
+        "iam:CreateServiceLinkedRole",
+        "cloudformation:*",
+        "ecr:*",
+        "elasticloadbalancing:*",
+        "autoscaling:*",
+        "logs:*",
+        "sts:GetCallerIdentity"
+      ],
+      "Resource": "*"
+    }
+  ]
+}

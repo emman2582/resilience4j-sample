@@ -18,7 +18,9 @@ resilience4j-sample/
 ├── docker/                # Docker Compose deployment
 │   ├── configs/           # Configuration files
 │   ├── dashboards/        # Grafana dashboards
-│   ├── scripts/           # Testing scripts
+│   ├── scripts/           # Organized testing & maintenance scripts
+│   │   ├── testing/       # Test scripts for all patterns
+│   │   └── maintenance/   # Cleanup and diagnostic scripts
 │   ├── swarm/            # Docker Swarm deployment
 │   └── docker-compose.yml # Full stack deployment
 ├── k8s/                   # Kubernetes manifests
@@ -85,21 +87,28 @@ npm run test:performance     # Load testing
 
 ### Build Images
 ```bash
-# From project root
-./gradlew clean build
-docker build -t r4j-sample-service-a:0.1.0 service-a/
-docker build -t r4j-sample-service-b:0.1.0 service-b/
-
-# Or from docker folder
+# Quick build (recommended)
 cd docker
 ./build.sh  # Linux/Mac
 .\build.bat # Windows
+
+# Manual build from project root
+./gradlew clean build
+docker build -t r4j-sample-service-a:0.1.0 service-a/
+docker build -t r4j-sample-service-b:0.1.0 service-b/
 ```
 
 ### Docker Compose (Full Stack)
 ```bash
 cd docker
 docker compose up -d
+
+# Quick test all patterns
+./scripts/testing/test-docker-compose.sh
+
+# View directory structure
+./show-structure.sh  # Linux/Mac
+.\show-structure.bat # Windows
 ```
 
 ### Docker Swarm (With Autoscaling)
@@ -197,7 +206,7 @@ cd grafana
 
 **Docker Compose:**
 ```bash
-cd docker && ./scripts/cleanup.sh
+cd docker && ./scripts/maintenance/cleanup.sh
 ```
 
 **Kubernetes (Local):**
@@ -218,8 +227,10 @@ cd helm && ./cleanup.sh
 **NodeJS Client:**
 ```bash
 cd nodejs-client
-rmdir /s /q node_modules
-del package-lock.json
+npm run cleanup
+# Or manual cleanup:
+# rmdir /s /q node_modules
+# del package-lock.json
 ```
 
 **Gradle:**

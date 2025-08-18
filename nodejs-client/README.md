@@ -153,8 +153,8 @@ curl http://localhost:8080/actuator/health
 
 # Start services from project root
 cd ..
-gradle :service-b:bootRun  # Terminal 1
-gradle :service-a:bootRun  # Terminal 2
+./gradlew :service-b:bootRun  # Terminal 1
+./gradlew :service-a:bootRun  # Terminal 2
 
 # Or use Docker Compose
 cd docker && docker compose up -d
@@ -223,10 +223,10 @@ npm install
 ```bash
 # Service A requires Service B
 # Start Service B first on port 8081
-gradle :service-b:bootRun
+./gradlew :service-b:bootRun
 
 # Wait for startup, then start Service A
-gradle :service-a:bootRun
+./gradlew :service-a:bootRun
 ```
 
 **"Circuit breaker always open"**
@@ -312,15 +312,13 @@ nodejs-client/
 
 ## 🧹 Cleanup
 
-**Linux/Mac:**
-```bash
-./cleanup.sh
-```
-
 **All Platforms:**
 ```bash
 # Use cleanup script
 npm run cleanup
+
+# Or use shell script (Linux/Mac)
+./scripts/cleanup.sh
 ```
 
 **Manual Cleanup (Windows):**

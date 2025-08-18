@@ -1,0 +1,25 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: resilience4j-dev
+  region: us-east-1
+
+iam:
+  withOIDC: true
+
+nodeGroups:
+  - name: workers
+    instanceType: t3.medium
+    desiredCapacity: 1
+    minSize: 1
+    maxSize: 1
+    volumeSize: 20
+    ssh:
+      allow: false
+
+addons:
+  - name: aws-ebs-csi-driver
+  - name: coredns
+  - name: kube-proxy
+  - name: vpc-cni

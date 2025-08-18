@@ -1,0 +1,61 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: resilience4j-ingress
+  namespace: NAMESPACE_PLACEHOLDER
+  annotations:
+    # Use existing ALB instead of creating new one
+    alb.ingress.kubernetes.io/load-balancer-name: ALB_NAME_PLACEHOLDER
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/target-group-arn: SERVICE_A_TG_ARN_PLACEHOLDER
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    # Health check configuration
+    alb.ingress.kubernetes.io/healthcheck-path: /actuator/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-a
+            port:
+              number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: resilience4j-grafana-ingress
+  namespace: NAMESPACE_PLACEHOLDER
+  annotations:
+    # Use existing ALB for Grafana
+    alb.ingress.kubernetes.io/load-balancer-name: ALB_NAME_PLACEHOLDER
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/target-group-arn: GRAFANA_TG_ARN_PLACEHOLDER
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80}]'
+    # Health check configuration for Grafana
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '30'
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
+    alb.ingress.kubernetes.io/healthy-threshold-count: '2'
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: '3'
+spec:
+  ingressClassName: alb
+  rules:
+  - http:
+      paths:
+      - path: /grafana
+        pathType: Prefix
+        backend:
+          service:
+            name: grafana
+            port:
+              number: 3000

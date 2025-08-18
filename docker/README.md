@@ -2,6 +2,14 @@
 
 Containerized deployment of Resilience4j microservices with monitoring stack.
 
+## 🆕 Recent Improvements
+
+- **📁 Organized Structure**: Scripts are now organized into `testing/` and `maintenance/` subdirectories
+- **🧪 Comprehensive Testing**: New `test-docker-compose.sh` script tests all patterns in one go
+- **🧹 Better Cleanup**: Consolidated cleanup scripts and added `.gitignore` for log files
+- **📊 Streamlined Scripts**: Removed redundant test scripts, kept the best versions
+- **📝 Clear Documentation**: Updated README with better organization and examples
+
 ## 📁 Directory Structure
 
 ```
@@ -16,18 +24,27 @@ docker/
 │   ├── grafana-dashboard-enhanced.json
 │   ├── grafana-dashboard-golden-metrics.json
 │   └── grafana-dashboard-updated.json
-├── scripts/                  # Testing and utility scripts
-│   ├── cleanup.sh           # Cleanup containers
-│   ├── test-circuit-breaker.sh # Circuit breaker tests
-│   ├── test-bulkhead.sh     # Bulkhead tests
-│   └── restart-service-a.sh # Service restart
+├── scripts/                  # Organized scripts
+│   ├── testing/             # Test scripts
+│   │   ├── test-docker-compose.sh    # Docker Compose tests
+│   │   ├── test-bulkhead-comprehensive.sh # Bulkhead tests
+│   │   ├── test-circuit-breaker.sh    # Circuit breaker tests
+│   │   ├── test-resilience.sh         # Comprehensive K8s tests
+│   │   └── check-bulkhead-config.sh   # Configuration checks
+│   └── maintenance/         # Maintenance scripts
+│       ├── cleanup.sh       # Cleanup containers
+│       ├── diagnose-metrics.sh # Metrics diagnostics
+│       ├── fix-metrics.sh   # Fix common issues
+│       └── restart-service-a.sh # Service restart
 ├── swarm/                   # Docker Swarm deployment
 │   ├── docker-compose-swarm.yml # Swarm stack definition
 │   ├── setup-swarm.sh       # Initialize swarm
 │   ├── start-autoscaler.sh  # Start autoscaling
 │   ├── test-scaling.sh      # Test scaling behavior
 │   └── autoscaler.py        # Python autoscaler
+├── build.sh / build.bat     # Build scripts
 ├── docker-compose.yml       # Main compose file
+├── .gitignore              # Git ignore rules
 └── README.md               # This file
 ```
 
@@ -115,28 +132,55 @@ Dashboard files: [`dashboards/`](dashboards/)
 
 ## 🧪 Testing
 
+### Quick Testing (Docker Compose)
 ```bash
-# Test circuit breaker
-./scripts/test-circuit-breaker.sh
+# Comprehensive test suite for Docker Compose
+./scripts/testing/test-docker-compose.sh
+```
 
-# Test bulkhead
-./scripts/test-bulkhead.sh
+### Individual Pattern Testing
+```bash
+# Test circuit breaker pattern
+./scripts/testing/test-circuit-breaker.sh
 
-# Test scaling (Swarm)
+# Test bulkhead isolation
+./scripts/testing/test-bulkhead-comprehensive.sh
+
+# Comprehensive resilience testing (K8s)
+./scripts/testing/test-resilience.sh
+
+# Check bulkhead configuration
+./scripts/testing/check-bulkhead-config.sh
+```
+
+### Docker Swarm Testing
+```bash
+# Test scaling behavior
 ./swarm/test-scaling.sh
 
 # Test autoscaler implementation
 ./swarm/test-autoscaler.sh
+```
 
+### Health Checks
+```bash
 # Test monitoring stack
 curl http://localhost:9090/api/v1/query?query=up  # Prometheus health
 curl http://localhost:3000/api/health             # Grafana health
+curl http://localhost:8080/actuator/health        # Service A health
+curl http://localhost:8081/actuator/health        # Service B health
+```
 
+### Troubleshooting
+```bash
 # Diagnose metrics issues
-./scripts/diagnose-metrics.sh
+./scripts/maintenance/diagnose-metrics.sh
 
 # Fix common metrics problems
-./scripts/fix-metrics.sh
+./scripts/maintenance/fix-metrics.sh
+
+# Restart services
+./scripts/maintenance/restart-service-a.sh
 ```
 
 ## 🔧 Troubleshooting
@@ -162,17 +206,29 @@ curl http://localhost:9090/api/v1/targets       # Prometheus targets
 
 ## 🧹 Cleanup
 
+### Standard Cleanup
 ```bash
-# Standard cleanup
-./scripts/cleanup.sh
-
-# Windows cleanup
-./scripts/cleanup.bat
+# Docker Compose cleanup
+./scripts/maintenance/cleanup.sh      # Linux/Mac
+./scripts/maintenance/cleanup.bat     # Windows
 
 # Force cleanup (if containers are stuck)
-./scripts/force-cleanup.sh
+./scripts/maintenance/force-cleanup.sh
+```
 
-# Manual Swarm cleanup
+### Docker Swarm Cleanup
+```bash
+# Remove swarm stack
 docker stack rm resilience4j
 docker swarm leave --force
+```
+
+### Complete Environment Reset
+```bash
+# Stop all containers and remove volumes
+docker compose down -v
+docker system prune -f
+
+# Remove built images (optional)
+docker rmi r4j-sample-service-a:0.1.0 r4j-sample-service-b:0.1.0
 ```

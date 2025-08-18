@@ -19,7 +19,7 @@ docker compose up -d grafana
 
 # Load dashboards
 cd ../grafana
-./load-dashboards.sh
+./scripts/load-dashboards.sh
 ```
 
 **Kubernetes (Local):**
@@ -41,7 +41,7 @@ cd grafana
 
 # Load dashboards
 cd grafana
-./load-dashboards-k8s.sh resilience4j-aws-single aws
+./scripts/load-dashboards-k8s.sh resilience4j-aws-single single
 ```
 
 **EKS Multi Node:**
@@ -51,7 +51,7 @@ cd grafana
 
 # Load dashboards
 cd grafana
-./load-dashboards-k8s.sh resilience4j-aws-multi aws
+./scripts/load-dashboards-k8s.sh resilience4j-aws-multi multi
 ```
 
 ### Manual Loading
@@ -84,7 +84,7 @@ scripts\setup-prometheus-datasource.bat http://localhost:3000 admin admin local
 ### Script Parameters
 
 ```bash
-./load-dashboards.sh [GRAFANA_URL] [USER] [PASSWORD] [ENVIRONMENT]
+./scripts/load-dashboards.sh [GRAFANA_URL] [USER] [PASSWORD] [ENVIRONMENT]
 ```
 
 - **GRAFANA_URL**: Grafana instance URL (default: http://localhost:3000)

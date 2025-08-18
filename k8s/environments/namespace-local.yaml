@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: resilience4j-local
-  labels:
-    environment: local
-    deployment-type: minikube
-    app.kubernetes.io/name: resilience4j
-    app.kubernetes.io/instance: local

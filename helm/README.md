@@ -34,38 +34,45 @@ Helm Chart → Minikube → Port Forward → Services
 Labels: environment=local, deployment-type=minikube
 ```
 
-### AWS Single Node
+### AWS Single Node Cluster
 ```
 Namespace: resilience4j-aws-single
-Helm Chart → EKS (1 node) → ALB Ingress → Services (1 replica each)
+Helm Chart → EKS (1 node, t3.medium) → ALB Ingress → Services (1 replica each)
 Labels: environment=aws, deployment-type=single-node, node-count=1
+Cost: ~$50/month | Use Case: Development, testing
 ```
 
-### AWS Multi Node
+### AWS Multi-Node Cluster
 ```
 Namespace: resilience4j-aws-multi
-Helm Chart → EKS (2 nodes) → ALB Ingress → Services (2 replicas each)
-Labels: environment=aws, deployment-type=multi-node, node-count=2
+Helm Chart → EKS (2-5 nodes, t3.medium) → ALB Ingress → Services (2+ replicas)
+Labels: environment=aws, deployment-type=multi-node, node-count=2+
+Cost: ~$100-250/month | Use Case: Production, high availability
 ```
 
-## 🚀 Quick Start
+## 🚀 Deployment Instructions
 
-### 1. Build Docker Images
+# 🏠 Local Environment (Minikube)
 
+## Prerequisites
+- Kubernetes 1.19+ (Minikube/Docker Desktop)
+- Helm 3.8+
+- Docker images built locally
+- 4GB+ RAM, 2+ CPU cores
+
+## Build Images
 ```bash
 # From project root
 gradle clean build
 docker build -t r4j-sample-service-a:0.1.0 service-a/
 docker build -t r4j-sample-service-b:0.1.0 service-b/
 
-# For Minikube, load images into cluster
+# Load images into minikube
 minikube image load r4j-sample-service-a:0.1.0
 minikube image load r4j-sample-service-b:0.1.0
 ```
 
-### 2. Install the Chart
-
-**Local Development (Minikube):**
+## Deploy
 ```bash
 # Install with default values
 helm install resilience4j-stack ./helm/resilience4j-stack
@@ -74,23 +81,9 @@ helm install resilience4j-stack ./helm/resilience4j-stack
 helm install resilience4j-stack ./helm/resilience4j-stack -f custom-values.yaml
 ```
 
-**AWS Cloud Deployment:**
+## Access Services
 ```bash
-# Single node EKS cluster
-./scripts/aws-deploy.sh resilience4j-cluster 1 us-east-1
-
-# Multi-node EKS cluster  
-./scripts/aws-deploy.sh resilience4j-cluster 2 us-east-1
-
-# Manual Helm install with AWS values
-helm install resilience4j-stack ./resilience4j-stack \
-  -f ./environments/values-aws-single.yaml
-```
-
-### 3. Access Services
-
-```bash
-# Port forward to access services locally
+# Port forward to access services
 kubectl port-forward svc/service-a 8080:8080
 kubectl port-forward svc/prometheus 9090:9090
 kubectl port-forward svc/grafana 3000:3000
@@ -99,6 +92,104 @@ kubectl port-forward svc/grafana 3000:3000
 curl http://localhost:8080/api/a/ok
 curl http://localhost:8080/api/a/flaky?failRate=60
 ```
+
+## Configuration
+- **Namespace:** `default` or custom
+- **Service A:** 1 replica
+- **Service B:** 1 replica
+- **Resources:** Minimal (development)
+- **Cost:** Free
+- **Use Case:** Development, learning
+
+---
+
+# ☁️ AWS Single Node Cluster
+
+## Prerequisites
+- AWS CLI configured
+- eksctl installed
+- Helm 3.8+
+- ECR repositories (created automatically)
+- IAM permissions for EKS and ECR
+
+## Deploy
+```bash
+# 1. Deploy EKS cluster (automated)
+./scripts/aws-deploy.sh resilience4j-dev 1 us-east-1
+
+# 2. Manual Helm install (alternative)
+helm install resilience4j-stack ./resilience4j-stack \
+  -f ./environments/values-aws-single.yaml \
+  --set serviceA.replicaCount=1 \
+  --set serviceB.replicaCount=1
+```
+
+## Access Services
+```bash
+# Get ALB URL
+kubectl get ingress -n resilience4j-aws-single
+
+# Test via ALB
+curl http://<ALB-URL>/api/a/ok
+
+# Port forward for monitoring
+kubectl port-forward svc/grafana 3000:3000 -n resilience4j-aws-single
+```
+
+## Configuration
+- **Namespace:** `resilience4j-aws-single`
+- **Node Count:** 1 (t3.medium)
+- **Service A:** 1 replica
+- **Service B:** 1 replica
+- **Autoscaling:** Basic HPA only
+- **Cost:** ~$50/month
+- **Use Case:** Development, testing, cost optimization
+
+---
+
+# ☁️ AWS Multi-Node Cluster
+
+## Prerequisites
+- AWS CLI configured
+- eksctl installed
+- Helm 3.8+
+- ECR repositories (created automatically)
+- IAM permissions for EKS, ECR, Auto Scaling
+
+## Deploy
+```bash
+# 1. Deploy EKS cluster (automated)
+./scripts/aws-deploy.sh resilience4j-prod 3 us-east-1
+
+# 2. Manual Helm install with autoscaling
+helm install resilience4j-stack ./resilience4j-stack \
+  -f ./environments/values-aws-multi.yaml \
+  --set serviceA.replicaCount=2 \
+  --set serviceB.replicaCount=2 \
+  --set autoscaling.hpa.enabled=true \
+  --set autoscaling.vpa.enabled=true
+```
+
+## Access Services
+```bash
+# Get ALB URL
+kubectl get ingress -n resilience4j-aws-multi
+
+# Test via ALB
+curl http://<ALB-URL>/api/a/ok
+
+# Port forward for monitoring
+kubectl port-forward svc/grafana 3000:3000 -n resilience4j-aws-multi
+```
+
+## Configuration
+- **Namespace:** `resilience4j-aws-multi`
+- **Node Count:** 2-5 (t3.medium)
+- **Service A:** 2+ replicas (distributed)
+- **Service B:** 2+ replicas (distributed)
+- **Autoscaling:** HPA + VPA + Cluster Autoscaler
+- **Cost:** ~$100-250/month
+- **Use Case:** Production, high availability, load testing
 
 ## ⚙️ Configuration
 
@@ -172,15 +263,54 @@ ingress:
         - resilience4j.local
 ```
 
-## 📊 Monitoring Setup
+---
 
-### Grafana Dashboard Setup
+# 📊 Monitoring
+
+## Local Environment Monitoring
+```bash
+# Port forward to access monitoring
+kubectl port-forward svc/grafana 3000:3000
+kubectl port-forward svc/prometheus 9090:9090
+
+# Access points
+# Grafana: http://localhost:3000 (admin/admin)
+# Prometheus: http://localhost:9090
+```
+
+## AWS Single Node Monitoring
+```bash
+# Port forward to access monitoring
+kubectl port-forward svc/grafana 3000:3000 -n resilience4j-aws-single
+kubectl port-forward svc/prometheus 9090:9090 -n resilience4j-aws-single
+
+# Load dashboards
+cd ../grafana
+./scripts/load-dashboards-k8s.sh resilience4j-aws-single single
+```
+
+## AWS Multi-Node Monitoring
+```bash
+# Port forward to access monitoring
+kubectl port-forward svc/grafana 3000:3000 -n resilience4j-aws-multi
+kubectl port-forward svc/prometheus 9090:9090 -n resilience4j-aws-multi
+
+# Load dashboards
+cd ../grafana
+./scripts/load-dashboards-k8s.sh resilience4j-aws-multi multi
+
+# Monitor autoscaling
+kubectl get hpa -n resilience4j-aws-multi -w
+kubectl get vpa -n resilience4j-aws-multi -w
+```
+
+## Dashboard Setup
 
 **Automatic Loading:**
 ```bash
 # Load dashboards automatically
-cd grafana
-./load-dashboards-k8s.sh resilience4j-local local
+cd ../grafana
+./scripts/load-dashboards-k8s.sh <namespace> <environment>
 ```
 
 **Manual Import:**
@@ -188,7 +318,47 @@ cd grafana
 2. Add Prometheus data source: `http://prometheus:9090`
 3. Import dashboard using ID `12139` or upload `grafana-dashboard-enhanced.json`
 
-## 🔄 Autoscaling
+---
+
+# 🔄 Autoscaling
+
+## Local Environment (Optional)
+```bash
+# Enable basic HPA
+helm upgrade resilience4j-stack ./resilience4j-stack \
+  --set autoscaling.hpa.enabled=true
+
+# Monitor scaling
+kubectl get hpa -w
+```
+
+## AWS Single Node Autoscaling
+```bash
+# Enable HPA (limited by single node)
+helm upgrade resilience4j-stack ./resilience4j-stack \
+  --set autoscaling.hpa.enabled=true
+
+# Monitor scaling
+kubectl get hpa -n resilience4j-aws-single -w
+kubectl top nodes
+```
+**Limitation:** Scaling limited to single node capacity
+
+## AWS Multi-Node Autoscaling
+```bash
+# Enable full autoscaling
+helm upgrade resilience4j-stack ./resilience4j-stack \
+  --set autoscaling.hpa.enabled=true \
+  --set autoscaling.vpa.enabled=true
+
+# Monitor all scaling types
+kubectl get hpa -n resilience4j-aws-multi -w
+kubectl get vpa -n resilience4j-aws-multi -w
+kubectl get nodes -w
+```
+**Features:** HPA + VPA + Cluster Autoscaler
+
+## Configuration Examples
 
 ### HPA Configuration
 ```yaml
@@ -213,18 +383,6 @@ autoscaling:
     maxAllowed:
       cpu: 2000m
       memory: 2Gi
-```
-
-### Deploy with Autoscaling
-```bash
-# Enable HPA only
-helm install resilience4j-stack ./resilience4j-stack \
-  --set autoscaling.hpa.enabled=true
-
-# Enable both HPA and VPA
-helm install resilience4j-stack ./resilience4j-stack \
-  --set autoscaling.hpa.enabled=true \
-  --set autoscaling.vpa.enabled=true
 ```
 
 ### Key Metrics to Monitor
@@ -311,8 +469,9 @@ ingress:
 
 ### AWS Resource Configurations
 
-**Single Node (values-aws-single.yaml):**
+**Single Node Configuration (values-aws-single.yaml):**
 ```yaml
+# Optimized for single node deployment
 serviceA:
   replicaCount: 1
   resources:
@@ -322,10 +481,28 @@ serviceA:
     limits:
       memory: "512Mi"
       cpu: "500m"
+
+serviceB:
+  replicaCount: 1
+  resources:
+    requests:
+      memory: "256Mi"
+      cpu: "200m"
+    limits:
+      memory: "512Mi"
+      cpu: "500m"
+
+# Disable autoscaling for single node
+autoscaling:
+  hpa:
+    enabled: false
+  vpa:
+    enabled: false
 ```
 
-**Multi Node (values-aws-multi.yaml):**
+**Multi-Node Configuration (values-aws-multi.yaml):**
 ```yaml
+# Optimized for multi-node deployment
 serviceA:
   replicaCount: 2
   resources:
@@ -336,9 +513,41 @@ serviceA:
       memory: "1Gi"
       cpu: "800m"
 
+serviceB:
+  replicaCount: 2
+  resources:
+    requests:
+      memory: "512Mi"
+      cpu: "300m"
+    limits:
+      memory: "1Gi"
+      cpu: "800m"
+
+# Enable autoscaling for multi-node
+autoscaling:
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+  vpa:
+    enabled: true
+    updateMode: "Auto"
+
 # Pod anti-affinity for node distribution
 affinity:
   enabled: true
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - service-a
+        topologyKey: kubernetes.io/hostname
 ```
 
 ## 🛠️ Management Commands
@@ -376,9 +585,11 @@ kubectl logs -l app=prometheus
 kubectl describe pod <pod-name>
 ```
 
-### Testing Resilience Patterns
+---
 
-**Using cURL:**
+# 🧪 Testing
+
+## Local Environment Testing
 ```bash
 # Port forward Service A
 kubectl port-forward svc/service-a 8080:8080
@@ -391,13 +602,42 @@ curl http://localhost:8080/api/a/bulkhead/x
 curl http://localhost:8080/api/a/limited
 ```
 
-**Using NodeJS Client:**
+## AWS Single Node Testing
 ```bash
-# From project root (with port forwarding active)
+# Get ALB URL
+ALB_URL=$(kubectl get ingress -n resilience4j-aws-single -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
+
+# Test via ALB
+curl http://$ALB_URL/api/a/ok
+curl "http://$ALB_URL/api/a/flaky?failRate=70"
+```
+
+## AWS Multi-Node Testing
+```bash
+# Get ALB URL
+ALB_URL=$(kubectl get ingress -n resilience4j-aws-multi -o jsonpath='{.items[0].status.loadBalancer.ingress[0].hostname}')
+
+# Test with load
+curl http://$ALB_URL/api/a/ok
+curl "http://$ALB_URL/api/a/flaky?failRate=70"
+
+# Test autoscaling
+for i in {1..100}; do curl -s http://$ALB_URL/api/a/slow?delayMs=2000 & done
+kubectl get hpa -n resilience4j-aws-multi -w
+```
+
+## NodeJS Client Testing
+```bash
+# From project root
 cd ../nodejs-client
 npm install
-npm start                    # Test all endpoints
-npm run test:performance     # Load testing
+
+# Local testing
+npm start
+
+# AWS testing (update .env.aws with ALB URL)
+npm run test:aws
+npm run test:performance
 ```
 
 ## 🐛 Troubleshooting
@@ -586,34 +826,55 @@ autoscaling:
   targetCPUUtilizationPercentage: 70
 ```
 
-## 🧹 Cleanup
+---
 
-### Local Development
+# 🧹 Cleanup
+
+## Local Environment Cleanup
 ```bash
-# Uninstall Helm release
+# Clean Helm release
+./scripts/cleanup.sh resilience4j-stack default
+
+# Clean all releases
+./scripts/cleanup.sh --all
+
+# Manual cleanup
 helm uninstall resilience4j-stack
 
-# Clean up Docker images
+# Clean Docker images
 docker rmi r4j-sample-service-a:0.1.0
 docker rmi r4j-sample-service-b:0.1.0
+
+# Windows users
+scripts\cleanup.bat resilience4j-stack default
 ```
 
-### AWS Cloud
+## AWS Single Node Cleanup
 ```bash
-# Uninstall Helm release
-helm uninstall resilience4j-stack
+# Clean release only (keep cluster)
+./scripts/cleanup.sh resilience4j-stack resilience4j-aws-single
 
-# Delete EKS cluster
-eksctl delete cluster --name resilience4j-cluster --region us-east-1
-
-# Clean up ECR repositories (optional)
-aws ecr delete-repository --repository-name r4j-sample-service-a --region us-east-1 --force
-aws ecr delete-repository --repository-name r4j-sample-service-b --region us-east-1 --force
-
-# Remove persistent volumes
-kubectl get pv
-kubectl delete pv <pv-name>
+# Full cleanup (includes EKS cluster)
+./scripts/cleanup-aws.sh resilience4j-dev us-east-1
 ```
+
+## AWS Multi-Node Cleanup
+```bash
+# Clean release only (keep cluster)
+./scripts/cleanup.sh resilience4j-stack resilience4j-aws-multi
+
+# Full cleanup (includes EKS cluster)
+./scripts/cleanup-aws.sh resilience4j-prod us-east-1
+```
+
+## Cleanup Options
+
+| Command | Scope | Description |
+|---------|-------|-------------|
+| `./scripts/cleanup.sh` | Single | Clean default release |
+| `./scripts/cleanup.sh <release> <namespace>` | Single | Clean specific release |
+| `./scripts/cleanup.sh --all` | All | Clean all releases |
+| `./scripts/cleanup-aws.sh <cluster> <region>` | AWS Full | EKS + ECR + releases |
 
 ## 📚 Additional Resources
 

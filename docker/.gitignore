@@ -1,0 +1,12 @@
+# Log files
+*.log
+nohup.out
+*.out
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS generated files
+.DS_Store
+Thumbs.db
