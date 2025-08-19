@@ -11,11 +11,22 @@ management:
   endpoints:
     web:
       exposure:
-        include: [health, info, metrics]
+        include: [health, info, metrics, prometheus]
   metrics:
+    web:
+      server:
+        request:
+          autotime:
+            enabled: true
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+      slo:
+        http.server.requests: 10ms,50ms,100ms,200ms,500ms,1s,2s,5s
     export:
       prometheus:
         enabled: true
+        histogram-flavor: prometheus
   tracing:
     sampling:
       probability: 1.0

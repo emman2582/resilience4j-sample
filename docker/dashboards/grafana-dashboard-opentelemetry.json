@@ -77,7 +77,7 @@
               }
             ]
           },
-          "unit": "short"
+          "unit": "reqps"
         },
         "overrides": []
       },
@@ -107,14 +107,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "up{job=\"otel-collector\"}",
+          "expr": "rate(http_server_requests_total[5m])",
           "instant": false,
-          "legendFormat": "OTel Collector Status",
+          "legendFormat": "{{job}} - {{method}} {{uri}}",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "OpenTelemetry Collector Health",
+      "title": "SLI: Request Rate (Throughput)",
       "type": "timeseries"
     },
     {
@@ -155,7 +155,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -167,12 +167,16 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 500
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 1000
               }
             ]
           },
-          "unit": "reqps"
+          "unit": "ms"
         },
         "overrides": []
       },
@@ -202,14 +206,26 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(otelcol_receiver_accepted_metric_points_total[5m])",
+          "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket[5m])) * 1000",
           "instant": false,
-          "legendFormat": "{{receiver}} - Metrics Received/sec",
+          "legendFormat": "{{job}} - P95 Latency",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.99, rate(http_server_requests_seconds_bucket[5m])) * 1000",
+          "instant": false,
+          "legendFormat": "{{job}} - P99 Latency",
+          "range": true,
+          "refId": "B"
         }
       ],
-      "title": "OTel Collector - Metrics Reception Rate",
+      "title": "SLI: Response Time (Latency)",
       "type": "timeseries"
     },
     {
@@ -250,7 +266,7 @@
               "mode": "none"
             },
             "thresholdsStyle": {
-              "mode": "off"
+              "mode": "line"
             }
           },
           "mappings": [],
@@ -262,18 +278,22 @@
                 "value": null
               },
               {
+                "color": "yellow",
+                "value": 1
+              },
+              {
                 "color": "red",
-                "value": 80
+                "value": 5
               }
             ]
           },
-          "unit": "bytes"
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
+        "w": 12,
         "x": 0,
         "y": 8
       },
@@ -297,14 +317,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "otelcol_process_memory_rss",
+          "expr": "(rate(http_server_requests_total{status=~\"5..\"}[5m]) / rate(http_server_requests_total[5m])) * 100",
           "instant": false,
-          "legendFormat": "Memory Usage",
+          "legendFormat": "{{job}} - Error Rate %",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "OTel Collector Memory",
+      "title": "SLI: Error Rate (Availability)",
       "type": "timeseries"
     },
     {
@@ -368,8 +388,8 @@
       },
       "gridPos": {
         "h": 8,
-        "w": 8,
-        "x": 8,
+        "w": 12,
+        "x": 12,
         "y": 8
       },
       "id": 4,
@@ -392,14 +412,204 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(otelcol_process_cpu_seconds_total[5m]) * 100",
+          "expr": "((rate(http_server_requests_total{status!~\"5..\"}[5m]) / rate(http_server_requests_total[5m])) * 100)",
           "instant": false,
-          "legendFormat": "CPU Usage %",
+          "legendFormat": "{{job}} - Success Rate %",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "OTel Collector CPU",
+      "title": "SLO: Service Availability (99.9% Target)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 16
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "resilience4j_circuitbreaker_state",
+          "instant": false,
+          "legendFormat": "{{name}} - {{state}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Circuit Breaker States",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 16
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "resilience4j_timelimiter_calls_total",
+          "instant": false,
+          "legendFormat": "{{name}} - {{kind}}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "TimeLimiter Calls",
       "type": "timeseries"
     },
     {
@@ -465,104 +675,9 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 8
-      },
-      "id": 5,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "rate(prometheus_tsdb_symbol_table_size_bytes[5m])",
-          "instant": false,
-          "legendFormat": "Prometheus TSDB Growth Rate",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Prometheus Metrics Processing",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "vis": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "auto",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "none"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          },
-          "unit": "reqps"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
         "y": 16
       },
-      "id": 6,
+      "id": 7,
       "options": {
         "legend": {
           "calcs": [],
@@ -582,9 +697,9 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(http_server_requests_seconds_count{job=\"service-a\"}[5m])",
+          "expr": "rate(otelcol_receiver_accepted_spans_total[5m])",
           "instant": false,
-          "legendFormat": "Service A - {{uri}} ({{status}})",
+          "legendFormat": "{{receiver}} - Spans Received/sec",
           "range": true,
           "refId": "A"
         },
@@ -594,14 +709,14 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "rate(http_server_requests_seconds_count{job=\"service-b\"}[5m])",
+          "expr": "rate(otelcol_receiver_accepted_metric_points_total[5m])",
           "instant": false,
-          "legendFormat": "Service B - {{uri}} ({{status}})",
+          "legendFormat": "{{receiver}} - Metrics Received/sec",
           "range": true,
           "refId": "B"
         }
       ],
-      "title": "Application Request Rate (via OTel Collector)",
+      "title": "OTel Collector Ingestion Rate",
       "type": "timeseries"
     },
     {
@@ -666,10 +781,10 @@
       "gridPos": {
         "h": 8,
         "w": 12,
-        "x": 12,
-        "y": 16
+        "x": 0,
+        "y": 24
       },
-      "id": 7,
+      "id": 8,
       "options": {
         "legend": {
           "calcs": [],
@@ -689,14 +804,121 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "resilience4j_circuitbreaker_state{job=\"service-a\"}",
+          "expr": "resilience4j_bulkhead_available_concurrent_calls",
           "instant": false,
-          "legendFormat": "{{name}} - {{state}}",
+          "legendFormat": "{{name}} - Available Calls",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "resilience4j_ratelimiter_available_permissions",
+          "instant": false,
+          "legendFormat": "{{name}} - Available Permits",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Resilience4j Resource Availability",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "vis": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 24
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "otelcol_process_uptime",
+          "instant": false,
+          "legendFormat": "OTel Collector Uptime",
           "range": true,
           "refId": "A"
         }
       ],
-      "title": "Resilience4j Patterns (via OTel Collector)",
+      "title": "OpenTelemetry Collector Health",
       "type": "timeseries"
     }
   ],
@@ -705,8 +927,9 @@
   "style": "dark",
   "tags": [
     "opentelemetry",
-    "collector",
-    "prometheus",
+    "sli",
+    "slo",
+    "resilience4j",
     "observability"
   ],
   "templating": {
@@ -718,8 +941,8 @@
   },
   "timepicker": {},
   "timezone": "",
-  "title": "OpenTelemetry Collector Dashboard",
-  "uid": "otel-collector",
-  "version": 1,
+  "title": "OpenTelemetry SLI/SLO Dashboard",
+  "uid": "otel-sli-slo-dashboard",
+  "version": 2,
   "weekStart": ""
 }

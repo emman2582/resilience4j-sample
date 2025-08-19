@@ -44,6 +44,7 @@ EOF
 
 docker build -f service-a/Dockerfile.local -t r4j-sample-service-a:0.1.0 service-a/
 docker build -f service-b/Dockerfile.local -t r4j-sample-service-b:0.1.0 service-b/
+docker compose down service-a service-b
 
 # Cleanup temp Dockerfiles
 rm -f service-a/Dockerfile.local service-b/Dockerfile.local
