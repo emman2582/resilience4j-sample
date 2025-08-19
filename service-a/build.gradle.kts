@@ -5,7 +5,9 @@ dependencies {
     implementation("io.github.resilience4j:resilience4j-spring-boot3:2.2.0")
     implementation("io.github.resilience4j:resilience4j-micrometer:2.2.0")
     
-    // Additional metrics support
+    // OpenTelemetry with proper autoconfiguration
     implementation("io.micrometer:micrometer-tracing")
-    runtimeOnly("io.micrometer:micrometer-tracing-bridge-brave")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp:1.32.0")
+    implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:1.32.0")
 }

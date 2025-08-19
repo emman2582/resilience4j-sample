@@ -1,0 +1,12 @@
+FROM eclipse-temurin:21-jre
+
+# Download OpenTelemetry Java agent
+ADD https://github.com/open-telemetry/opentelemetry-java-instrumentation/releases/latest/download/opentelemetry-javaagent.jar /app/opentelemetry-javaagent.jar
+
+COPY build/libs/service-a-0.1.0.jar /app/service-a.jar
+
+EXPOSE 8080
+
+ENTRYPOINT ["java", \
+    "-javaagent:/app/opentelemetry-javaagent.jar", \
+    "-jar", "/app/service-a.jar"]

@@ -1,32 +1,21 @@
 server:
   port: 8081
 
+logging:
+  level:
+    root: INFO
+    com.example.b: INFO
+  config: classpath:logback-spring.xml
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics,prometheus,env,configprops
+        include: [health, info, metrics]
   metrics:
     export:
       prometheus:
         enabled: true
-      otlp:
-        enabled: true
-        step: 5s
-        url: http://otel-collector:4318/v1/metrics
   tracing:
-    enabled: true
     sampling:
       probability: 1.0
-  otlp:
-    tracing:
-      endpoint: http://otel-collector:4318/v1/traces
-
-otel:
-  instrumentation:
-    http:
-      server:
-        enabled: true
-  exporter:
-    otlp:
-      endpoint: http://otel-collector:4318

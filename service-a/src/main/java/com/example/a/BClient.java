@@ -8,9 +8,11 @@ import io.github.resilience4j.timelimiter.annotation.TimeLimiter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -19,6 +21,7 @@ public class BClient {
 
     private static final Logger log = LoggerFactory.getLogger(BClient.class);
     private final RestTemplate restTemplate = new RestTemplate();
+    private final RestTemplate timeoutRestTemplate = createTimeoutRestTemplate();
 
     @Value("${b.url:http://localhost:8081}")
     private String baseUrl;
@@ -45,20 +48,31 @@ public class BClient {
     }
 
     /**
-     * Demonstrates TimeLimiter + fallback: wraps a blocking call into a CompletableFuture.
+     * Demonstrates Time Limiter with async execution.
      */
-    @TimeLimiter(name = "timelimiterB", fallbackMethod = "fallbackSlow")
-    public String callSlowWithTimeout(long delayMs) {
-        try {
-            return CompletableFuture.supplyAsync(() -> 
-                restTemplate.getForObject(baseUrl + "/api/b/slow?delayMs=" + delayMs, String.class)
-            ).get();
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return "interrupted";
-        } catch (ExecutionException e) {
-            return "error: " + e.getCause().getMessage();
-        }
+    @TimeLimiter(name = "timelimiterB", fallbackMethod = "fallbackTimeout")
+    public CompletableFuture<String> callSlowWithTimeout(long delayMs) {
+        log.info("Calling slow endpoint with TimeLimiter, delayMs: {}", delayMs);
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                String result = restTemplate.getForObject(baseUrl + "/api/b/slow?delayMs=" + delayMs, String.class);
+                log.info("TimeLimiter call completed: {}", result);
+                return result;
+            } catch (Exception e) {
+                log.error("Error in TimeLimiter call: {}", e.getMessage());
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    /**
+     * Creates RestTemplate with 2-second timeout.
+     */
+    private RestTemplate createTimeoutRestTemplate() {
+        return new RestTemplateBuilder()
+                .setConnectTimeout(Duration.ofSeconds(2))
+                .setReadTimeout(Duration.ofSeconds(2))
+                .build();
     }
 
     /**
@@ -118,6 +132,15 @@ public class BClient {
     }
 
     /**
+     * Demonstrates timeout resilience using Circuit Breaker with slow call detection.
+     */
+    @CircuitBreaker(name = "timeoutBreaker", fallbackMethod = "fallbackTimeout")
+    public String callWithTimeoutProtection(long delayMs) {
+        log.info("Calling with timeout protection, delayMs: {}", delayMs);
+        return timeoutRestTemplate.getForObject(baseUrl + "/api/b/slow?delayMs=" + delayMs, String.class);
+    }
+
+    /**
      * Demonstrates RateLimiter: allow only N requests per second.
      */
     @RateLimiter(name = "backendB", fallbackMethod = "fallbackString")
@@ -130,10 +153,17 @@ public class BClient {
         return "fallback-default";
     }
 
-    private String fallbackSlow(long delayMs, Throwable t) {
-        log.warn("TimeLimiter fallback triggered for delayMs {}: {}", delayMs, t.getMessage());
-        return "timeout-fallback: request took too long (>" + delayMs + "ms)";
+    private String fallbackTimeout(long delayMs, Throwable t) {
+        log.warn("Timeout circuit breaker fallback for delayMs {}: {}", delayMs, t.getMessage());
+        return "timeout-circuit-breaker-fallback: " + t.getClass().getSimpleName();
     }
+
+    private CompletableFuture<String> fallbackTimeout(long delayMs, Exception e) {
+        log.warn("TimeLimiter fallback triggered for delayMs {}: {}", delayMs, e.getMessage());
+        return CompletableFuture.completedFuture("timelimiter-fallback: exceeded 2s timeout");
+    }
+
+
 
     private void busyWork() {
         long x = 0;

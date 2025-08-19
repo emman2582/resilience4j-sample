@@ -11,11 +11,11 @@ RUN gradle :service-a:bootJar --no-daemon
 # -------- Runtime stage --------
 FROM eclipse-temurin:21-jre
 WORKDIR /app
-# Copy the built jar (works for both options)
-COPY build/libs/service-a-*.jar /app/app.jar
-# If using multi-stage build above, uncomment next line instead:
-# COPY --from=build /workspace/service-a/build/libs/service-a-*.jar /app/app.jar
+# Create logs directory
+RUN mkdir -p /app/logs
+# Copy the built jar from multi-stage build
+COPY --from=build /workspace/service-a/build/libs/service-a-*.jar /app/app.jar
 
-ENV JAVA_OPTS="-XX:+UseG1GC"
+ENV JAVA_OPTS="-XX:+UseG1GC -Dlogging.config=classpath:logback-spring.xml"
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]

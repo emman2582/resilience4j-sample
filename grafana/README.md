@@ -6,6 +6,7 @@ Automatically load enhanced and golden metrics dashboards into Grafana for both 
 
 - **Enhanced Dashboard** (`dashboards/grafana-dashboard-enhanced.json`) - Comprehensive Resilience4j metrics
 - **Golden Metrics Dashboard** (`dashboards/grafana-dashboard-golden-metrics.json`) - Key performance indicators
+- **OpenTelemetry Dashboard** (`dashboards/grafana-dashboard-opentelemetry.json`) - OpenTelemetry collector and observability metrics
 
 ## 🚀 Usage
 
@@ -127,6 +128,15 @@ scripts\setup-prometheus-datasource.bat http://localhost:3000 admin admin local
 - Error rate (%)
 - Response time (latency)
 - Saturation (resource usage)
+
+### OpenTelemetry Dashboard
+- OTel Collector metrics (spans/metrics reception and export rates)
+- Collector memory and CPU usage
+- Batch processor statistics
+- HTTP request metrics with OTel semantic conventions
+- Span duration distributions
+- Data drop rates and telemetry generation stats
+- Cross-service CPU usage comparison
 
 ## 🛠️ Troubleshooting
 

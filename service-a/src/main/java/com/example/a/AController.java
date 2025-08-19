@@ -44,9 +44,14 @@ public class AController {
     @GetMapping("/slow")
     public ResponseEntity<String> slow(@RequestParam(defaultValue = "2000") long delayMs) {
         logger.info("Received request: /api/a/slow with delayMs={}", delayMs);
-        String response = client.callSlowWithTimeout(delayMs);
-        logger.info("Response from client.callSlowWithTimeout({}): {}", delayMs, response);
-        return ResponseEntity.ok(response);
+        try {
+            String response = client.callSlowWithTimeout(delayMs).get();
+            logger.info("Response from client.callSlowWithTimeout({}): {}", delayMs, response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Exception in slow endpoint: {}", e.getMessage());
+            return ResponseEntity.status(500).body("TimeLimiter Error: " + e.getClass().getSimpleName());
+        }
     }
 
     @GetMapping("/bulkhead/x")
@@ -79,6 +84,19 @@ public class AController {
         String response = client.rateLimitedCall();
         logger.info("Response from client.rateLimitedCall(): {}", response);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/timeout")
+    public ResponseEntity<String> timeout(@RequestParam(defaultValue = "3000") long delayMs) {
+        logger.info("Received request: /api/a/timeout with delayMs={}", delayMs);
+        try {
+            String response = client.callWithTimeoutProtection(delayMs);
+            logger.info("Response from client.callWithTimeoutProtection({}): {}", delayMs, response);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("Exception in timeout endpoint: {}", e.getMessage());
+            return ResponseEntity.status(500).body("Timeout protection error: " + e.getClass().getSimpleName());
+        }
     }
 
     @GetMapping("/bulkhead/info")

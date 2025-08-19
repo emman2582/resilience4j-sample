@@ -4,34 +4,27 @@ server:
 b:
   url: ${B_URL:http://localhost:8081}
 
+logging:
+  level:
+    root: INFO
+    com.example.a: INFO
+    io.github.resilience4j: DEBUG
+  config: classpath:logback-spring.xml
+
 management:
   endpoints:
     web:
       exposure:
-        include: [health, info, metrics, prometheus, env, configprops]
+        include: [health, info, metrics]
   metrics:
     export:
       prometheus:
         enabled: true
-      otlp:
-        enabled: true
-        step: 5s
-        url: http://otel-collector:4318/v1/metrics
   tracing:
     sampling:
       probability: 1.0
-  otlp:
-    tracing:
-      endpoint: http://otel-collector:4318/v1/traces
 
-otel:
-  instrumentation:
-    http:
-      server:
-        enabled: true
-  exporter:
-    otlp:
-      endpoint: http://otel-collector:4318
+
 
 resilience4j:
   circuitbreaker:
@@ -43,6 +36,15 @@ resilience4j:
         failureRateThreshold: 50
         automaticTransitionFromOpenToHalfOpenEnabled: true
         waitDurationInOpenState: 5s
+      timeoutBreaker:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 4
+        minimumNumberOfCalls: 2
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: 2s
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        waitDurationInOpenState: 3s
   retry:
     instances:
       backendB:

@@ -1,0 +1,106 @@
+services:
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.109.0
+    container_name: otel-collector
+    command: ["--config=/etc/otel-collector-config.yml"]
+    volumes:
+      - ./configs/otel-collector.yml:/etc/otel-collector-config.yml
+      - app-logs:/tmp
+    ports:
+      - "4317:4317"   # OTLP gRPC
+      - "4318:4318"   # OTLP HTTP
+      - "9464:9464"   # Prometheus metrics
+      - "8888:8888"   # Collector metrics
+    networks:
+      - otel-net
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.60
+    container_name: jaeger
+    ports:
+      - "16686:16686"  # Jaeger UI
+      - "14250:14250"  # gRPC
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    networks:
+      - otel-net
+
+  loki:
+    image: grafana/loki:3.0.0
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - otel-net
+
+  service-b:
+    image: r4j-sample-service-b:0.1.0
+    container_name: service-b-otel
+    ports:
+      - "8081:8081"
+    environment:
+      - OTEL_SERVICE_NAME=service-b
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=service-b,service.version=0.1.0
+    volumes:
+      - app-logs:/tmp
+    depends_on:
+      - otel-collector
+    networks:
+      - otel-net
+
+  service-a:
+    image: r4j-sample-service-a:0.1.0
+    container_name: service-a-otel
+    ports:
+      - "8080:8080"
+    environment:
+      - B_URL=http://service-b:8081
+      - OTEL_SERVICE_NAME=service-a
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=prometheus
+      - OTEL_RESOURCE_ATTRIBUTES=service.name=service-a,service.version=0.1.0
+    volumes:
+      - app-logs:/tmp
+    depends_on:
+      - service-b
+      - otel-collector
+    networks:
+      - otel-net
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: prometheus-otel
+    volumes:
+      - ./configs/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.enable-lifecycle"
+    ports:
+      - "9090:9090"
+    networks:
+      - otel-net
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: grafana-otel
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - otel-net
+
+volumes:
+  app-logs:
+
+networks:
+  otel-net:
+    driver: bridge

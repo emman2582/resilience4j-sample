@@ -23,6 +23,7 @@ docker/
 │   ├── grafana-dashboard.json
 │   ├── grafana-dashboard-enhanced.json
 │   ├── grafana-dashboard-golden-metrics.json
+│   ├── grafana-dashboard-opentelemetry.json
 │   └── grafana-dashboard-updated.json
 ├── scripts/                  # Organized scripts
 │   ├── testing/             # Test scripts
@@ -125,6 +126,7 @@ Configuration file: [`configs/prometheus.yml`](configs/prometheus.yml)
 ### Available Dashboards
 - **Enhanced Dashboard**: Comprehensive Resilience4j metrics
 - **Golden Metrics Dashboard**: Key performance indicators (SLIs)
+- **OpenTelemetry Dashboard**: OTel collector and observability metrics
 - **Updated Dashboard**: Latest monitoring improvements
 - **Basic Dashboard**: Simple overview metrics
 
